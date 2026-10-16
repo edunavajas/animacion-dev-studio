@@ -2,6 +2,7 @@
 export const CH = {
   appInfo: 'app:info',
   appQuit: 'app:quit',
+  appSetTheme: 'app:setTheme',
 
   diagnosticsReport: 'diagnostics:report',
   clipboardWrite: 'clipboard:write',

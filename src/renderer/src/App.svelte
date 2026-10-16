@@ -5,8 +5,9 @@
   import TemplateView from './lib/TemplateView.svelte'
   import Toasts from './lib/Toasts.svelte'
   import ConflictDialog from './lib/ConflictDialog.svelte'
+  import ConfirmDialog from './lib/ConfirmDialog.svelte'
   import ExportSheet from './lib/ExportSheet.svelte'
-  import { Layers, Plus } from 'lucide-svelte'
+  import { Layers, Plus, Sun, Moon } from 'lucide-svelte'
 
   let dropDepth = $state(0)
 
@@ -69,6 +70,7 @@
     }
     if (e.key === 'Escape') {
       if (ui.exportSheetOpen) ui.exportSheetOpen = false
+      else if (ui.confirm) ui.confirm = null
       else if (ui.conflict) ui.conflict = null
     }
   }
@@ -92,6 +94,15 @@
     </div>
 
     <div class="topbar__actions">
+      <button
+        class="btn btn--icon"
+        onclick={() => ui.toggleTheme()}
+        title={ui.theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+        aria-label={ui.theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+      >
+        {#if ui.theme === 'dark'}<Sun size={17} strokeWidth={1.75} />{:else}<Moon size={17} strokeWidth={1.75} />{/if}
+      </button>
+
       {#if ui.selected}
         <button class="btn btn--ghost" onclick={() => ui.closeTemplate()}>Biblioteca</button>
         <button
@@ -130,6 +141,7 @@
 {/if}
 
 <ConflictDialog />
+<ConfirmDialog />
 <ExportSheet />
 <Toasts />
 

@@ -11,6 +11,7 @@ resources/.sidecars-ok
 .integration.mjs
 .debug-preview.mjs
 .debug-audio.mjs
+.debug-ui.mjs
 .bench.mjs
 test/.build/
 *.tsbuildinfo

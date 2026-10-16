@@ -17,6 +17,8 @@ export interface Prefs {
   volume?: number
   /** Vista previa silenciada. */
   muted?: boolean
+  /** Tema elegido a mano. Si falta, se usa el del sistema la primera vez. */
+  theme?: 'light' | 'dark'
 }
 
 const EMPTY: Prefs = { values: {} }

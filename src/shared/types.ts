@@ -154,6 +154,8 @@ export interface RenderJob {
 export interface AppInfo {
   version: string
   platform: NodeJS.Platform
+  /** Tema del sistema, para la primera vez (después manda la preferencia). */
+  systemTheme: 'light' | 'dark'
   /** Estado de los sidecars, para diagnóstico. */
   sidecars: {
     hyperframes: { path: string; ok: boolean }

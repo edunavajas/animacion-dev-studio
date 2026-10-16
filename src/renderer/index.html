@@ -1,9 +1,17 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>animacion-dev Studio</title>
+    <script>
+      // Tema antes del primer pintado, para que no haya destello. La app lo
+      // corrige después con la preferencia guardada del usuario.
+      try {
+        var dark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <a class="skip-link" href="#main">Saltar al contenido</a>

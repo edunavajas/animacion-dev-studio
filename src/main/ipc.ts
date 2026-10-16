@@ -1,4 +1,4 @@
-import { BrowserWindow, clipboard, dialog, ipcMain, shell, app } from 'electron'
+import { BrowserWindow, clipboard, dialog, ipcMain, nativeTheme, shell, app } from 'electron'
 import { basename, extname, join } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { CH } from '../shared/channels'
@@ -57,11 +57,17 @@ export function registerIpc(deps: {
     return {
       version: app.getVersion(),
       platform: process.platform,
+      systemTheme: nativeTheme.shouldUseDarkColors ? 'dark' : 'light',
       sidecars: describeSidecars(),
       lowMemory: isLowMemory(),
       totalRamGB: totalRamGB(),
       cores: cores()
     }
+  })
+
+  // El tema también se aplica al marco nativo de la ventana.
+  ipcMain.handle(CH.appSetTheme, (_e, theme: 'light' | 'dark') => {
+    nativeTheme.themeSource = theme === 'dark' ? 'dark' : 'light'
   })
 
   ipcMain.handle(CH.appQuit, () => app.quit())

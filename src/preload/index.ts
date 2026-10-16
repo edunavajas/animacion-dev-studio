@@ -25,11 +25,13 @@ export interface PrefsShape {
   background?: PreviewBackground
   volume?: number
   muted?: boolean
+  theme?: 'light' | 'dark'
 }
 
 const api = {
   appInfo: (): Promise<AppInfo> => ipcRenderer.invoke(CH.appInfo),
   quit: (): Promise<void> => ipcRenderer.invoke(CH.appQuit),
+  setTheme: (theme: 'light' | 'dark'): Promise<void> => ipcRenderer.invoke(CH.appSetTheme, theme),
   diagnosticsReport: (reason?: string): Promise<string> =>
     ipcRenderer.invoke(CH.diagnosticsReport, reason),
 

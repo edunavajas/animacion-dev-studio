@@ -53,7 +53,18 @@
     <aside class="view__aside" aria-label="Personalización">
       <div class="aside__head">
         <h2 class="aside__title">Personaliza</h2>
-        <button class="btn btn--ghost" onclick={() => ui.resetValues()} title="Restablecer valores">
+        <button
+          class="btn btn--ghost"
+          onclick={() =>
+            ui.askConfirm({
+              title: '¿Restablecer los valores?',
+              body: 'Se volverán a poner los valores originales de la plantilla. Lo que hayas escrito o elegido en estos campos se perderá.',
+              confirmLabel: 'Restablecer',
+              danger: true,
+              onConfirm: () => ui.resetValues()
+            })}
+          title="Restablecer valores"
+        >
           <RotateCcw size={15} strokeWidth={1.75} /> Restablecer
         </button>
       </div>

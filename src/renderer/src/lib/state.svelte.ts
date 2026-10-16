@@ -22,6 +22,17 @@ export interface Conflict {
   issues: ImportResult['issues']
 }
 
+/** Petición de confirmación (destructiva o no trivial). */
+export interface ConfirmRequest {
+  title: string
+  body?: string
+  confirmLabel: string
+  cancelLabel?: string
+  /** Pinta el botón de confirmar como peligroso. */
+  danger?: boolean
+  onConfirm: () => void | Promise<void>
+}
+
 /** Ajustes de exportación recordados entre sesiones. */
 export interface ExportSettings {
   format: ExportFormat
@@ -50,6 +61,8 @@ class UiState {
   jobs = $state<RenderJob[]>([])
   toasts = $state<Toast[]>([])
   conflict = $state<Conflict | null>(null)
+  confirm = $state<ConfirmRequest | null>(null)
+  theme = $state<'light' | 'dark'>('light')
   importing = $state(false)
   dragActive = $state(false)
   exportSheetOpen = $state(false)
@@ -75,8 +88,7 @@ class UiState {
     return this.jobs.find((j) => j.status === 'running')
   }
 
-  notify(text: string, kind: Toast['kind'] = 'info', action?: Toast['action']): void {
-    const id = ++toastSeq
+  notify(text: string, kind: Toast['kind'] = 'info', action?: Toast['action']): void {    const id = ++toastSeq
     this.toasts = [...this.toasts, { id, text, kind, action }]
     setTimeout(() => this.dismiss(id), kind === 'error' ? 9000 : 4500)
   }
@@ -93,6 +105,29 @@ class UiState {
 
   /* ------------------------------------------------------------ acciones */
 
+  /** Pide confirmación antes de ejecutar algo destructivo o no trivial. */
+  askConfirm(req: ConfirmRequest): void {
+    this.confirm = req
+  }
+
+  async resolveConfirm(accept: boolean): Promise<void> {
+    const c = this.confirm
+    this.confirm = null
+    if (accept && c) await c.onConfirm()
+  }
+
+  /** Tema claro/oscuro con un solo botón; se recuerda la elección. */
+  applyTheme(): void {
+    document.documentElement.dataset.theme = this.theme
+  }
+
+  async toggleTheme(): Promise<void> {
+    this.theme = this.theme === 'dark' ? 'light' : 'dark'
+    this.applyTheme()
+    await window.api.setTheme(this.theme)
+    await window.api.prefs.set({ theme: this.theme })
+  }
+
   async init(): Promise<void> {
     this.info = await window.api.appInfo()
     await this.reloadLibrary()
@@ -101,6 +136,9 @@ class UiState {
     if (prefs.background) this.background = prefs.background
     if (typeof prefs.volume === 'number') this.volume = prefs.volume
     if (typeof prefs.muted === 'boolean') this.muted = prefs.muted
+    // Tema: la elección guardada; si no hay, la del sistema.
+    this.theme = prefs.theme ?? this.info?.systemTheme ?? 'light'
+    this.applyTheme()
     if (prefs.lastTemplateId && this.library.some((e) => e.id === prefs.lastTemplateId)) {
       // Se reabre con openTemplate para que también siembre los valores por defecto.
       const entry = this.library.find((e) => e.id === prefs.lastTemplateId)!

@@ -7,6 +7,7 @@ import { log } from './logs'
 import { RenderManager } from './render'
 import { PreviewServer, mimeFor } from './previewServer'
 import { installBundledExamples, listLibrary } from './library'
+import { readPrefs } from './prefs'
 import { describeSidecars } from './sidecars'
 import { registerIpc } from './ipc'
 
@@ -39,7 +40,7 @@ function createWindow(): void {
     minWidth: 940,
     minHeight: 620,
     show: false,
-    backgroundColor: '#F5F5FA',
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#101018' : '#F2F2F8',
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
     trafficLightPosition: process.platform === 'darwin' ? { x: 16, y: 18 } : undefined,
     webPreferences: {
@@ -174,9 +175,15 @@ if (!app.requestSingleInstanceLock()) {
     const sidecars = describeSidecars()
     log.info('sidecars', sidecars)
 
-    // STUDIO_THEME=light|dark fuerza el tema (verificación de diseño).
+    // STUDIO_THEME=light|dark fuerza el tema (verificación de diseño del tema).
     const forced = process.env.STUDIO_THEME
-    if (forced === 'light' || forced === 'dark') nativeTheme.themeSource = forced
+    if (forced === 'light' || forced === 'dark') {
+      nativeTheme.themeSource = forced
+    } else {
+      // La preferencia guardada manda; si no hay, se sigue al sistema.
+      const prefs = await readPrefs()
+      if (prefs.theme) nativeTheme.themeSource = prefs.theme
+    }
 
     // `--diagnose` imprime el estado de componentes y sale (soporte y CI).
     if (process.argv.includes('--diagnose')) {

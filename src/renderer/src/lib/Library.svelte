@@ -1,14 +1,38 @@
 <script lang="ts">
   import { ui } from './state.svelte'
   import { fileUrl, formatDuration, resolutionLabel } from './util'
-  import { FolderOpen, Trash2, Search, Plus, Film } from 'lucide-svelte'
+  import { FolderOpen, Trash2, Search, Plus, Film, MoreVertical } from 'lucide-svelte'
   import type { LibraryEntry } from '../../../shared/types'
 
   let menu = $state<{ x: number; y: number; entry: LibraryEntry } | null>(null)
 
-  function openMenu(e: MouseEvent, entry: LibraryEntry) {
+  /**
+   * Abre el menú de opciones. `stopPropagation` es imprescindible: si el clic
+   * llega a la ventana, el manejador global cierra el menú en el mismo gesto y
+   * el botón parecería no hacer nada. La posición se calcula desde el elemento
+   * (no desde el puntero) para que activarlo con el teclado también lo coloque
+   * bien.
+   */
+  function openMenu(e: MouseEvent, entry: LibraryEntry, desdePuntero = false) {
     e.preventDefault()
-    menu = { x: e.clientX, y: e.clientY, entry }
+    e.stopPropagation()
+    const MENU_W = 220
+    const MENU_H = 96
+    let x: number
+    let y: number
+    if (desdePuntero && (e.clientX || e.clientY)) {
+      x = e.clientX
+      y = e.clientY
+    } else {
+      const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
+      x = r.left
+      y = r.bottom + 4
+    }
+    menu = {
+      x: Math.max(8, Math.min(x, window.innerWidth - MENU_W - 8)),
+      y: Math.max(8, Math.min(y, window.innerHeight - MENU_H - 8)),
+      entry
+    }
   }
 
   function closeMenu() {
@@ -21,7 +45,13 @@
 
   async function removeTemplate(entry: LibraryEntry) {
     menu = null
-    await ui.deleteTemplate(entry)
+    ui.askConfirm({
+      title: `¿Quitar «${entry.name}»?`,
+      body: 'Desaparecerá de la biblioteca. El archivo original no se toca, y la plantilla se puede volver a añadir arrastrándola otra vez.',
+      confirmLabel: 'Quitar',
+      danger: true,
+      onConfirm: () => ui.deleteTemplate(entry)
+    })
   }
 </script>
 
@@ -73,11 +103,11 @@
   {:else}
     <ul class="grid">
       {#each ui.filtered as entry (entry.id)}
-        <li>
+        <li class="cell">
           <button
             class="tile"
             onclick={() => ui.openTemplate(entry)}
-            oncontextmenu={(e) => openMenu(e, entry)}
+            oncontextmenu={(e) => openMenu(e, entry, true)}
             title={entry.manifest.description ?? entry.name}
           >
             <span class="tile__thumb">
@@ -95,6 +125,14 @@
                 {formatDuration(entry.manifest.duration)} · {resolutionLabel(entry)}
               </span>
             </span>
+          </button>
+          <button
+            class="tile__menu"
+            onclick={(e) => openMenu(e, entry)}
+            aria-label="Opciones de {entry.name}"
+            title="Opciones"
+          >
+            <MoreVertical size={16} strokeWidth={1.75} />
           </button>
         </li>
       {/each}
@@ -257,6 +295,36 @@
   .tile__specs {
     font-size: var(--text-xs);
     color: var(--tertiary);
+  }
+
+  .cell {
+    position: relative;
+  }
+
+  /* Siempre visible: si solo aparece al pasar el ratón, no se descubre. */
+  .tile__menu {
+    position: absolute;
+    top: var(--sp-2);
+    right: var(--sp-2);
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: none;
+    border-radius: var(--r-sm);
+    background: transparent;
+    color: var(--tertiary);
+    cursor: pointer;
+    transition:
+      background-color var(--dur-base) var(--ease-out),
+      color var(--dur-base) var(--ease-out);
+  }
+
+  .tile__menu:hover {
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: var(--elev-1);
   }
 
   .empty {

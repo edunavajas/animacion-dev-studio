@@ -59,7 +59,7 @@
     if (d.type === 'ready') {
       loading = false
       post({ type: 'background', kind: ui.background.kind })
-      post({ type: 'theme', dark: window.matchMedia('(prefers-color-scheme: dark)').matches })
+      post({ type: 'theme', dark: ui.theme === 'dark' })
       pushAudio()
       if (pendingSeek !== null) {
         const t = pendingSeek
@@ -133,6 +133,16 @@
     if (bg !== lastBg) {
       lastBg = bg
       post({ type: 'background', kind: bg })
+    }
+  })
+
+  // Al cambiar el tema, los cuadros de transparencia también cambian.
+  let lastTheme = $state(ui.theme)
+  $effect(() => {
+    const t = ui.theme
+    if (t !== lastTheme) {
+      lastTheme = t
+      post({ type: 'theme', dark: t === 'dark' })
     }
   })
 
