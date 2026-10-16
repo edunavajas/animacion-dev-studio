@@ -1,0 +1,44 @@
+.github/workflows/build.yml
+  h_6241add5026f5b 45,63
+README.md
+  h_6241add5026f5b 1-138
+docs/ARCHITECTURE.md
+  h_6241add5026f5b 1-130
+docs/PHASE0-SPIKE.md
+  h_6241add5026f5b 57,61-65,67-68,70,72-82,105-127,130-140,179-189
+docs/SIGNING.md
+  h_6241add5026f5b 1-87
+electron-builder.yml
+  h_6241add5026f5b 30-31
+package.json
+  h_6241add5026f5b 21
+scripts/fetch-sidecars.mjs
+  h_6241add5026f5b 13,89-111,127
+src/main/index.ts
+  h_6241add5026f5b 1,3,10,20,53-92,174-186
+src/main/previewServer.ts
+  h_6241add5026f5b 97-99,101-104,107,131,177,180
+src/renderer/src/app.css
+  h_6241add5026f5b 91-95,127-128
+src/renderer/src/lib/ConflictDialog.svelte
+  h_6241add5026f5b 44,50-51
+src/renderer/src/lib/ExportSheet.svelte
+  h_6241add5026f5b 253,262-263
+src/renderer/src/lib/Preview.svelte
+  h_6241add5026f5b 43,62-67,142-146
+src/renderer/src/lib/state.svelte.ts
+  h_6241add5026f5b 101-103,124-133,193,221-222
+templates/boton-suscribirse/.hyperframes/video-state.json
+  h_6241add5026f5b 37-38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "73f4b27057b3c0dccf250ea1f97a5cbdc883503c",
+  "prompts": {},
+  "humans": {
+    "h_6241add5026f5b": {
+      "author": "Edu Navajas <eduardonco@ext.inditex.com>"
+    }
+  }
+}
