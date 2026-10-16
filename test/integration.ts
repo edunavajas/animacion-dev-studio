@@ -122,8 +122,12 @@ async function main(): Promise<void> {
     const shot = join(app.getPath('temp'), 'studio-preview-shot.png')
     await rm(shot, { force: true })
     const chromeless = await spawnHeadlessScreenshot(base + '/', shot)
-    const size = chromeless ? await fileSize(shot) : 0
-    check('la preview se renderiza a PNG (runtime real)', size > 8000, `bytes=${size} → ${shot}`)
+    const dims = chromeless ? await pngSize(shot) : null
+    check(
+      'la preview se renderiza a un PNG 1280x720 (runtime real)',
+      dims?.width === 1280 && dims?.height === 720,
+      `dimensiones=${dims ? dims.width + 'x' + dims.height : 'ninguna'} → ${shot}`
+    )
   }
   server.stop()
 
@@ -145,12 +149,19 @@ async function main(): Promise<void> {
   app.exit(failures > 0 ? 1 : 0)
 }
 
-async function fileSize(p: string): Promise<number> {
+/**
+ * Lee ancho/alto de un PNG desde su cabecera (IHDR), sin dependencias.
+ * Es un chequeo más fuerte y mucho menos frágil que el tamaño en bytes:
+ * una captura en blanco comprime a pocos bytes y hacía el test inestable.
+ */
+async function pngSize(p: string): Promise<{ width: number; height: number } | null> {
   try {
     const fs = await import('node:fs/promises')
-    return (await fs.stat(p)).size
+    const buf = await fs.readFile(p)
+    if (buf.length < 24 || buf.readUInt32BE(0) !== 0x89504e47) return null
+    return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) }
   } catch {
-    return 0
+    return null
   }
 }
 
