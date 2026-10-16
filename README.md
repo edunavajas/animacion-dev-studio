@@ -133,6 +133,9 @@ npm run dev           # arranca la app
 - Sin autoactualización, sin catálogo remoto, sin editor de plantillas, sin IA.
 - Sin soporte de Linux (el código es portable, pero no se distribuye).
 - Windows 11 x64 es el objetivo en Windows; macOS 14+ en Mac (arm64).
-- La exportación se prueba a fondo en macOS. **La validación en Windows 11 real y
-  la importación en Premiere siguen pendientes** (ver fases en
-  `docs/PHASE0-SPIKE.md`).
+- **Verificado**: la exportación MOV con alpha funciona desde el paquete, con
+  entorno vacío, en macOS; CI compila, empaqueta y valida los componentes en
+  Windows 11 (NSIS + MSI).
+- **Pendiente**: abrir la app y exportar en un Windows 11 de escritorio real, y
+  confirmar la importación del MOV en Premiere. Ver el detalle de qué está probado
+  y qué no en [`docs/PHASE0-SPIKE.md`](docs/PHASE0-SPIKE.md).

@@ -174,11 +174,40 @@ y apuntar los env vars a ellos. Lo hace `scripts/fetch-sidecars.mjs`.
 **Electron.** Instalador grande, sí, pero es el precio del navegador del render,
 que hay que pagar con cualquier shell.
 
+## CI (GitHub Actions) — ejecutado de verdad
+
+Workflow `build`, matriz `macos-latest` + `windows-latest`. Estado: **los cuatro
+jobs en verde**.
+
+| Job | Plataforma | Resultado |
+|---|---|---|
+| tipado y pruebas | macOS | ✅ |
+| tipado y pruebas | Windows | ✅ **26/26**, incluido el render MOV |
+| instalador | macOS | ✅ `.dmg` 278 MB + `--diagnose` del paquete |
+| instalador | Windows | ✅ NSIS + MSI + `--diagnose` del paquete |
+
+El `--diagnose` del paquete en Windows resuelve sus componentes desde dentro de la
+build:
+
+```
+hyperframes → ...\resources\app.asar.unpacked\node_modules\hyperframes\bin\hyperframes.mjs   ok: true
+browser     → ...\resources\chrome\...\win64-152.0.7977.30\...\chrome-headless-shell.exe      ok: true  (source: bundled)
+ffmpeg      → ...\resources\app.asar.unpacked\node_modules\ffmpeg-static\ffmpeg.exe           ok: true
+ffprobe     → ...\resources\app.asar.unpacked\node_modules\ffprobe-static\bin\win32\x64\ffprobe.exe  ok: true
+```
+
+Esto cubre la parte que **no** se puede probar en un Mac: compilar y empaquetar
+para Windows 11. Lo que sigue sin probarse en Windows es **usar la app con ratón**
+y **arrastrar una plantilla** en un escritorio real.
+
+Tamaños de los artefactos subidos: **281 MB** (macOS) y **517 MB** (Windows,
+NSIS + MSI juntos).
+
 ## NO verificado (honestidad)
 
-- **Windows 11 real**: no hay máquina disponible en este entorno. Todo el
-  empaquetado de Windows (NSIS/MSI) se confía a CI; falta instalar y exportar en
-  una VM limpia.
+- **Windows 11 de escritorio**: CI compila, empaqueta y verifica componentes, pero
+  nadie ha abierto la ventana ni ha arrastrado una plantilla en Windows. Falta esa
+  prueba manual (o una VM).
 - **Adobe Premiere**: no hay Premiere en este equipo. El alpha está verificado con
   `ffprobe` (`yuva444p12le`), no importando el MOV en Premiere.
 - **Fidelidad pixel a pixel** entre el Chromium de Electron y
