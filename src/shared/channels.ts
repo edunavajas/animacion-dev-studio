@@ -4,6 +4,7 @@ export const CH = {
   appQuit: 'app:quit',
 
   diagnosticsReport: 'diagnostics:report',
+  clipboardWrite: 'clipboard:write',
 
   libraryList: 'library:list',
   libraryImport: 'library:import',

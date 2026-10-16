@@ -31,6 +31,8 @@ const api = {
   diagnosticsReport: (reason?: string): Promise<string> =>
     ipcRenderer.invoke(CH.diagnosticsReport, reason),
 
+  copyText: (text: string): Promise<void> => ipcRenderer.invoke(CH.clipboardWrite, text),
+
   /** Ruta real de un archivo soltado (Electron ≥32 ya no expone File.path). */
   pathForFile: (file: File): string => webUtils.getPathForFile(file),
 

@@ -114,7 +114,11 @@ class UiState {
           run: () => void window.api.exporter.openFolder(job.outputPath)
         })
       } else if (job.status === 'error') {
-        this.notify(job.error || 'La exportación falló.', 'error')
+        const message = job.error || 'La exportación falló.'
+        this.notify(message, 'error', {
+          label: 'Copiar informe',
+          run: () => void this.copyErrorReport(`${job.templateName}: ${message}`)
+        })
       } else if (job.status === 'cancelled') {
         this.notify('Exportación cancelada.', 'info')
       }
@@ -139,6 +143,13 @@ class UiState {
     await Promise.all(Array.from({ length: Math.min(workers, pending.length) }, run))
   }
 
+  /** Copia un informe de error para que el usuario lo pueda enviar. */
+  async copyErrorReport(reason?: string): Promise<void> {
+    const report = await window.api.diagnosticsReport(reason)
+    await window.api.copyText(report)
+    this.notify('Informe copiado. Pégalo en un mensaje y mándalo.', 'ok')
+  }
+
   upsertJob(job: RenderJob): void {
     const idx = this.jobs.findIndex((j) => j.id === job.id)
     if (idx === -1) this.jobs = [...this.jobs, job]
@@ -160,7 +171,11 @@ class UiState {
       }
       if (!result.ok) {
         const first = result.issues.find((i) => i.level === 'error')
-        this.notify(first?.message ?? 'No se pudo añadir la plantilla.', 'error')
+        const message = first?.message ?? 'No se pudo añadir la plantilla.'
+        this.notify(message, 'error', {
+          label: 'Copiar informe',
+          run: () => void this.copyErrorReport(`Importar: ${message}`)
+        })
         return
       }
       await this.reloadLibrary()

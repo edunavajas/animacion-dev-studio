@@ -1,4 +1,4 @@
-import { BrowserWindow, dialog, ipcMain, shell, app } from 'electron'
+import { BrowserWindow, clipboard, dialog, ipcMain, shell, app } from 'electron'
 import { basename, extname, join } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { CH } from '../shared/channels'
@@ -67,6 +67,10 @@ export function registerIpc(deps: {
   ipcMain.handle(CH.appQuit, () => app.quit())
 
   ipcMain.handle(CH.diagnosticsReport, (_e, reason?: string) => buildErrorReport(reason))
+
+  ipcMain.handle(CH.clipboardWrite, (_e, text: string) => {
+    clipboard.writeText(text)
+  })
 
   ipcMain.handle(CH.libraryList, () => listLibrary())
 

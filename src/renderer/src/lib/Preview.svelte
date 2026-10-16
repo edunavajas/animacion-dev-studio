@@ -152,7 +152,15 @@
         <div class="preview__overlay preview__overlay--error" role="alert">
           <p>No se pudo cargar la vista previa.</p>
           <p class="preview__err">{error}</p>
-          <button class="btn btn--secondary" onclick={boot}>Reintentar</button>
+          <div class="preview__actions">
+            <button class="btn btn--secondary" onclick={boot}>Reintentar</button>
+            <button
+              class="btn btn--ghost"
+              onclick={() => ui.copyErrorReport(`Vista previa: ${error}`)}
+            >
+              Copiar informe
+            </button>
+          </div>
         </div>
       {/if}
     </div>
@@ -288,6 +296,12 @@
     color: var(--muted);
     max-width: 46ch;
     text-align: center;
+  }
+
+  .preview__actions {
+    display: flex;
+    gap: var(--sp-2);
+    margin-top: var(--sp-2);
   }
 
   .spinner {
