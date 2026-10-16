@@ -1,0 +1,44 @@
+.gitignore
+  h_6241add5026f5b 13,17
+package.json
+  h_6241add5026f5b 3
+src/main/library.ts
+  h_6241add5026f5b 90-92,95-109,112-137,144-149
+src/main/prefs.ts
+  h_6241add5026f5b 16-19
+src/main/previewServer.ts
+  h_6241add5026f5b 133-140,142-155,157-161,175-190,195-197,203,207-212,215-217,219,223-227,234-235,239-240
+src/main/render.ts
+  h_6241add5026f5b 7,320-324,381-416
+src/preload/index.ts
+  h_6241add5026f5b 26-27
+src/renderer/src/lib/ExportSheet.svelte
+  h_6241add5026f5b 208-212
+src/renderer/src/lib/Preview.svelte
+  h_6241add5026f5b 3,40-54,63,227-255,416-442
+src/renderer/src/lib/state.svelte.ts
+  h_6241add5026f5b 48-49,102-103,116-117,172-184,218-235,279-289
+src/shared/types.ts
+  h_6241add5026f5b 150-151
+test/debug-audio.ts
+  h_6241add5026f5b 1-138
+test/fixtures/audio/assets/gsap.min.js
+  h_6241add5026f5b 1-11
+test/fixtures/audio/index.html
+  h_6241add5026f5b 1-65
+test/fixtures/audio/template.json
+  h_6241add5026f5b 1-18
+test/integration.ts
+  h_6241add5026f5b 13-14,20,27-30,143,151-167,173-283,326-339,343,349,356,372-374
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "31ca7de5d6bcd48a8014cba5d62de105c2ef5122",
+  "prompts": {},
+  "humans": {
+    "h_6241add5026f5b": {
+      "author": "Edu Navajas <eduardonco@ext.inditex.com>"
+    }
+  }
+}
