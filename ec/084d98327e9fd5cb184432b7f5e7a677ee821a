@@ -1,0 +1,14 @@
+README.md
+  h_6241add5026f5b 47-83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ec084d98327e9fd5cb184432b7f5e7a677ee821a",
+  "prompts": {},
+  "humans": {
+    "h_6241add5026f5b": {
+      "author": "Edu Navajas <eduardonco@ext.inditex.com>"
+    }
+  }
+}
