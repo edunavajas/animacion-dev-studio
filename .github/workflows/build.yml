@@ -88,8 +88,14 @@ jobs:
           $app = Get-ChildItem "$env:LOCALAPPDATA\Programs" -Recurse -Filter 'animacion-dev Studio.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
           if (-not $app) { throw 'El instalador no dejó la app instalada en LOCALAPPDATA\Programs' }
           Write-Host "Instalada en: $($app.FullName)"
-          & $app.FullName --diagnose
-          if ($LASTEXITCODE -ne 0) { throw "La app instalada no resuelve sus componentes (exit $LASTEXITCODE)" }
+          # Ojo: Electron es una app GUI, así que $LASTEXITCODE no sirve aquí
+          # (sale vacío). Se comprueba el contenido del diagnóstico.
+          $out = & $app.FullName --diagnose | Out-String
+          Write-Host $out
+          if ($out -notmatch '"packaged":\s*true') { throw 'No se pudo diagnosticar la app instalada' }
+          $oks = ([regex]::Matches($out, '"ok":\s*true')).Count
+          Write-Host "Componentes OK: $oks/4"
+          if ($oks -ne 4) { throw "La app instalada no resuelve sus componentes ($oks/4)" }
       # Simula una actualización con las MISMAS banderas que usa la app y comprueba
       # que el instalador la relanza solo (--force-run solo actúa si es silencioso).
       - name: Actualizar en Windows y comprobar el relanzado
