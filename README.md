@@ -40,10 +40,13 @@ lo dejaste (y hay un botón para restablecer).
 
 ## Instalar
 
-Descarga el instalador de la última release:
+Descarga desde la última release: **https://github.com/edunavajas/animacion-dev-studio/releases/latest**
 
-- **macOS**: `.dmg` (arm64). Arrastra a Aplicaciones.
-- **Windows 11**: `.exe` (NSIS) o `.msi` (x64).
+| Plataforma | Archivo | Tamaño |
+|---|---|---|
+| macOS (arm64) | `animacion-dev.Studio-0.1.0-arm64.dmg` | 282 MB |
+| Windows 11 (x64) | `animacion-dev.Studio.Setup.0.1.0.exe` (instalador NSIS) | 249 MB |
+| Windows 11 (x64) | `animacion-dev.Studio.0.1.0.msi` | 276 MB |
 
 La app **no necesita** Node, Chrome ni ffmpeg instalados: lleva dentro sus propios
 componentes. En cambio, ocupa bastante (el navegador del render pesa ~190 MB), y
