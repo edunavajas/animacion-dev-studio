@@ -74,6 +74,36 @@ jobs:
       - name: Diagnóstico del paquete (Windows)
         if: runner.os == 'Windows'
         run: '& "release/win-unpacked/animacion-dev Studio.exe" --diagnose'
+      # Prueba REAL del instalador en Windows: instalar en silencio y comprobar que
+      # la app queda instalada y funciona. Es justo lo que no se puede verificar
+      # desde un Mac.
+      - name: Instalar en Windows en silencio
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem release -Filter '*.exe' | Where-Object { $_.Name -notlike '*unpacked*' } | Select-Object -First 1
+          if (-not $exe) { throw 'No se encontró el instalador NSIS' }
+          Write-Host "Instalador: $($exe.Name) ($([math]::Round($exe.Length/1MB,1)) MB)"
+          Start-Process -FilePath $exe.FullName -ArgumentList '/S' -Wait
+          $app = Get-ChildItem "$env:LOCALAPPDATA\Programs" -Recurse -Filter 'animacion-dev Studio.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $app) { throw 'El instalador no dejó la app instalada en LOCALAPPDATA\Programs' }
+          Write-Host "Instalada en: $($app.FullName)"
+          & $app.FullName --diagnose
+          if ($LASTEXITCODE -ne 0) { throw "La app instalada no resuelve sus componentes (exit $LASTEXITCODE)" }
+      # Simula una actualización con las MISMAS banderas que usa la app y comprueba
+      # que el instalador la relanza solo (--force-run solo actúa si es silencioso).
+      - name: Actualizar en Windows y comprobar el relanzado
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem release -Filter '*.exe' | Where-Object { $_.Name -notlike '*unpacked*' } | Select-Object -First 1
+          Write-Host 'Lanzando con: --updated /S --force-run'
+          Start-Process -FilePath $exe.FullName -ArgumentList '--updated','/S','--force-run'
+          Start-Sleep -Seconds 30
+          $proc = Get-Process -Name 'animacion-dev Studio' -ErrorAction SilentlyContinue
+          if (-not $proc) { throw 'El instalador no relanzó la app tras la actualización' }
+          Write-Host "La app se relanzó sola tras actualizar: OK (pid $($proc.Id -join ','))"
+          $proc | Stop-Process -Force
       # Con un tag v* se publica la release y los instaladores quedan descargables.
       - name: Publicar release
         if: startsWith(github.ref, 'refs/tags/v')
