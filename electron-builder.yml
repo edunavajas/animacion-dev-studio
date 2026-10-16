@@ -37,6 +37,16 @@ mac:
   gatekeeperAssess: false
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
+  # v1 se distribuye SIN firmar, pero hay que firmar ad-hoc igualmente: si no,
+  # electron-builder omite la firma y el bundle conserva la firma "linker" del
+  # Electron original, ya inválida porque le hemos añadido recursos. macOS lo
+  # tolera sin cuarentena, pero si el .dmg se descarga desde un navegador
+  # (cuarentena activa) el sistema dice «la app está dañada» y clic derecho →
+  # Abrir NO lo salva. Con firma ad-hoc válida, el aviso es el normal de
+  # «desarrollador no identificado» y sí se puede abrir.
+  # Al comprar un Developer ID: quitar esta línea y definir CSC_LINK +
+  # CSC_KEY_PASSWORD (o poner aquí el nombre del certificado).
+  identity: '-'
 
 dmg:
   title: animacion-dev Studio

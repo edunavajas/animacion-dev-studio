@@ -1,6 +1,6 @@
 {
   "name": "animacion-dev-studio",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Reproductor y exportador de plantillas HyperFrames para editores no técnicos (MOV ProRes 4444 con alpha)",
   "license": "MIT",
   "author": "Eduardo Navajas",
