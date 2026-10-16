@@ -37,6 +37,9 @@ jobs:
     name: instalador (${{ matrix.os }})
     needs: verify
     if: github.event_name != 'pull_request'
+    # Necesario para publicar la release cuando se empuja un tag v*.
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
@@ -71,6 +74,18 @@ jobs:
       - name: Diagnóstico del paquete (Windows)
         if: runner.os == 'Windows'
         run: '& "release/win-unpacked/animacion-dev Studio.exe" --diagnose'
+      # Con un tag v* se publica la release y los instaladores quedan descargables.
+      - name: Publicar release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/*.dmg
+            release/*.exe
+            release/*.msi
+          generate_release_notes: true
+          # Cada plataforma aporta lo suyo: en macOS no hay .exe y en Windows no hay .dmg.
+          fail_on_unmatched_files: false
       - name: Subir instaladores
         uses: actions/upload-artifact@v4
         with:
