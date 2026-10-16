@@ -125,12 +125,18 @@ class UiState {
     void this.ensureThumbnails()
   }
 
-  /** Genera en segundo plano las miniaturas que falten. Una sola vez por sesión. */
+  /** Genera en segundo plano las miniaturas que falten (2 a la vez, una por sesión). */
   async ensureThumbnails(): Promise<void> {
-    for (const entry of this.library) {
-      if (entry.thumbPath) continue
-      await window.api.library.thumbnail(entry.id)
+    const pending = this.library.filter((e) => !e.thumbPath).map((e) => e.id)
+    const workers = 2
+    const run = async (): Promise<void> => {
+      for (;;) {
+        const id = pending.shift()
+        if (!id) return
+        await window.api.library.thumbnail(id)
+      }
     }
+    await Promise.all(Array.from({ length: Math.min(workers, pending.length) }, run))
   }
 
   upsertJob(job: RenderJob): void {

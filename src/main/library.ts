@@ -178,7 +178,9 @@ export async function ensureThumbnail(id: string): Promise<string | null> {
   const entry = await getEntry(id)
   if (!entry) return null
   if (entry.thumbPath) return entry.thumbPath
-  const thumb = await generateThumbnail(entry.dir)
+  // Un poco pasado el ecuador: la animación de entrada ya se ha asentado.
+  const at = Math.max(0.2, entry.manifest.duration * 0.6)
+  const thumb = await generateThumbnail(entry.dir, at)
   if (thumb) log.info('miniatura generada', { id })
   else log.warn('no se pudo generar la miniatura', { id })
   return thumb
