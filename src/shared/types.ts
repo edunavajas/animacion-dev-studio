@@ -204,6 +204,8 @@ export interface UpdateAsset {
   name: string
   url: string
   size: number
+  /** sha256 que publica GitHub, para comprobar la descarga antes de ejecutarla. */
+  digest?: string
 }
 
 export interface UpdateInfo {

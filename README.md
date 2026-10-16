@@ -174,13 +174,27 @@ botón **Descargar**. No hay que buscar nada a mano.
 | | Windows | macOS |
 |---|---|---|
 | Descarga | ✅ dentro de la app, con progreso | ✅ dentro de la app, con progreso |
-| Instala | ✅ **solo**: se cierra y abre el instalador | ⚠️ abre el `.dmg` y arrastras a Aplicaciones |
+| Comprueba el `sha256` antes de instalar | ✅ | ✅ |
+| Instala | ✅ **solo**: se cierra, se actualiza y **se vuelve a abrir** | ⚠️ abre el `.dmg` y arrastras a Aplicaciones |
 | Qué hace falta | nada | **firma de Apple** (99 €/año) |
+
+En Windows el instalador se lanza con `--updated /S --force-run`, las mismas
+banderas que usa `electron-updater`: cierra la app si está abierta (sin preguntar),
+instala en silencio y la relanza. La bandera `--force-run` solo relanza en el
+instalador asistido cuando además es silencioso, por eso van juntas.
 
 **Por qué en macOS no se instala sola:** macOS entrega la actualización a
 Squirrel.Mac, que exige que el binario nuevo esté firmado por el **mismo Team ID**
 que el instalado. No hay lista de confianza que ampliar: sin certificado de Apple,
 una app no puede reemplazarse a sí misma. Con el certificado, es cambiar una línea.
+
+Las descargas se comprueban contra el `sha256` que publica GitHub **antes** de
+ejecutarlas; si no coincide, el fichero se descarta y se avisa.
+
+Si algo falla, el registro está en `userData/logs/main.log` y la app avisa con
+opción de copiar un informe. Cuando arranca después de actualizarse, deja
+`arrancada tras aplicar una actualización` en el registro — es la señal de que el
+ciclo completo funcionó.
 
 Los instaladores olvidados en `userData/updates/` no se limpian solos todavía.
 

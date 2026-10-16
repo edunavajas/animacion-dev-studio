@@ -18,7 +18,7 @@ import { PreviewServer } from '../src/main/previewServer'
 import { listLibrary, importFromPath, deleteTemplate, installBundledExamples } from '../src/main/library'
 import { parseManifest, extractDeclaredVariables, crossCheck } from '../src/main/manifest'
 import { buildVariablesPayload, probeHasAudio } from '../src/main/render'
-import { isNewer, pickAsset } from '../src/main/updater'
+import { isNewer, pickAsset, windowsInstallerArgs } from '../src/main/updater'
 import { hyperframesCliPath, browserPath, ffmpegPath, ffprobePath, sidecarEnv } from '../src/main/sidecars'
 
 // Al ejecutar un script suelto, Electron no lee el nombre del package.json:
@@ -187,6 +187,18 @@ async function main(): Promise<void> {
     'en Windows elige el .exe',
     pickAsset(assets, 'win32')?.name === 'animacion-dev.Studio.Setup.0.4.0.exe'
   )
+
+  // El instalador de Windows debe lanzarse con las banderas que hacen que cierre
+  // la app solo (--updated), sin asistente (/S) y la relance al final
+  // (--force-run, que en el instalador asistido solo actúa si es silencioso).
+  const winArgs = windowsInstallerArgs()
+  check('Windows: pasa --updated', winArgs.includes('--updated'))
+  check('Windows: instala en silencio (/S)', winArgs.includes('/S'))
+  check('Windows: relanza la app (--force-run)', winArgs.includes('--force-run'))
+
+  // El sha256 que publica GitHub se conserva para poder verificar la descarga.
+  const withDigest = [{ name: 'a.exe', browser_download_url: 'u', size: 1, digest: 'sha256:abc' }]
+  check('se conserva el sha256 del asset', pickAsset(withDigest, 'win32')?.digest === 'sha256:abc')
 
   console.log(`\n${checks - failures}/${checks} comprobaciones OK`)
   if (failures > 0) console.log(`${failures} FALLOS`)

@@ -172,6 +172,11 @@ if (!app.requestSingleInstanceLock()) {
     // Limpieza de temporales de ejecuciones anteriores (también tras un cierre sucio).
     await rm(workDir(), { recursive: true, force: true }).catch(() => {})
     log.info('app lista', { version: app.getVersion(), dev: isDev })
+    // El instalador de Windows relanza la app con `--updated`: dejarlo en el
+    // registro sirve para confirmar que una actualización llegó a buen puerto.
+    if (process.argv.includes('--updated')) {
+      log.info('arrancada tras aplicar una actualización', { version: app.getVersion() })
+    }
     const sidecars = describeSidecars()
     log.info('sidecars', sidecars)
 

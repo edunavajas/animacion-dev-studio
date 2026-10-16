@@ -1,5 +1,6 @@
 import { createWriteStream } from 'node:fs'
 import { mkdir, rm, stat } from 'node:fs/promises'
+import { createHash } from 'node:crypto'
 import { join } from 'node:path'
 import { spawn } from 'node:child_process'
 import { shell } from 'electron'
@@ -36,14 +37,34 @@ export function isNewer(candidate: string, current: string): boolean {
 
 /** Elige el instalador que corresponde a esta plataforma. */
 export function pickAsset(
-  assets: { name: string; browser_download_url: string; size: number }[],
+  assets: { name: string; browser_download_url: string; size: number; digest?: string }[],
   platform: NodeJS.Platform = process.platform
 ): UpdateAsset | undefined {
   const wanted = platform === 'darwin' ? /\.dmg$/i : platform === 'win32' ? /\.exe$/i : null
   if (!wanted) return undefined
   const found = assets.find((a) => wanted.test(a.name))
   if (!found) return undefined
-  return { name: found.name, url: found.browser_download_url, size: found.size }
+  return {
+    name: found.name,
+    url: found.browser_download_url,
+    size: found.size,
+    digest: found.digest
+  }
+}
+
+/**
+ * Argumentos con los que se lanza el instalador en Windows.
+ *
+ * Están copiados de `electron-updater` (`NsisUpdater.doInstall`) y comprobados
+ * contra las plantillas NSIS de electron-builder:
+ * - `--updated` → si la app está abierta, el instalador la cierra solo en vez de
+ *   preguntar (sin esto sale un diálogo de más).
+ * - `/S` → instalación silenciosa, sin asistente.
+ * - `--force-run` → relanza la app al terminar. En el instalador asistido esto
+ *   SOLO ocurre si además es silencioso, por eso van juntos.
+ */
+export function windowsInstallerArgs(): string[] {
+  return ['--updated', '/S', '--force-run']
 }
 
 interface GhRelease {
@@ -51,7 +72,7 @@ interface GhRelease {
   body?: string
   published_at?: string
   html_url?: string
-  assets?: { name: string; browser_download_url: string; size: number }[]
+  assets?: { name: string; browser_download_url: string; size: number; digest?: string }[]
 }
 
 /**
@@ -115,6 +136,7 @@ export async function downloadUpdate(
 
   const total = Number(res.headers.get('content-length')) || asset.size || 0
   let received = 0
+  const hash = createHash('sha256')
   const out = createWriteStream(dest)
 
   const reader = res.body.getReader()
@@ -125,6 +147,7 @@ export async function downloadUpdate(
       if (done) break
       if (!value) continue
       received += value.byteLength
+      hash.update(value)
       if (!out.write(Buffer.from(value))) {
         await new Promise<void>((r) => out.once('drain', () => r()))
       }
@@ -140,8 +163,23 @@ export async function downloadUpdate(
   if (total > 0 && st.size !== total) {
     throw new Error(`La descarga quedó incompleta (${st.size} de ${total} bytes).`)
   }
+
+  // Integridad: GitHub publica el sha256 de cada asset. Se comprueba ANTES de
+  // ejecutar nada, que es lo importante cuando el fichero es un instalador.
+  if (asset.digest && asset.digest.startsWith('sha256:')) {
+    const expected = asset.digest.slice('sha256:'.length).toLowerCase()
+    const actual = hash.digest('hex').toLowerCase()
+    if (actual !== expected) {
+      await rm(dest, { force: true }).catch(() => {})
+      log.error('la descarga no coincide con el sha256 publicado', { expected, actual })
+      throw new Error('El archivo descargado no coincide con el que publicó GitHub. Se ha descartado.')
+    }
+  } else {
+    log.warn('el asset no trae sha256; no se pudo comprobar la integridad', { name: asset.name })
+  }
+
   onProgress(100)
-  log.info('actualización descargada', { file: dest, bytes: st.size })
+  log.info('actualización descargada y verificada', { file: dest, bytes: st.size })
   return dest
 }
 
@@ -156,7 +194,18 @@ export async function downloadUpdate(
  */
 export async function installUpdate(path: string): Promise<'auto' | 'manual'> {
   if (process.platform === 'win32') {
-    const child = spawn(path, [], { detached: true, stdio: 'ignore', windowsHide: false })
+    const args = windowsInstallerArgs()
+    log.info('lanzando el instalador de Windows', { path, args })
+    const child = spawn(path, args, { detached: true, stdio: 'ignore', windowsHide: true })
+    // Si el instalador no arranca (permisos, antivirus), hay que enterarse.
+    await new Promise<void>((resolve, reject) => {
+      child.once('error', (err) => {
+        log.error('no se pudo lanzar el instalador', { err: String(err) })
+        reject(new Error(`No se pudo abrir el instalador: ${err.message}`))
+      })
+      // Si sigue vivo a los 400 ms, arrancó bien.
+      setTimeout(resolve, 400)
+    })
     child.unref()
     return 'auto'
   }

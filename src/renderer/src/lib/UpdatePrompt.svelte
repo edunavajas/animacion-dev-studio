@@ -57,7 +57,8 @@
           </p>
         {:else}
           <p class="dialog__body">
-            Se cerrará la aplicación y se abrirá el instalador. Al terminar, ábrela otra vez.
+            Se cerrará la aplicación, se instalará la nueva versión y <strong>se volverá a abrir
+            sola</strong>. No hace falta que hagas nada más.
           </p>
         {/if}
         <div class="dialog__actions">
@@ -69,9 +70,11 @@
       {:else if fase === 'installing'}
         <h2 id="up-title" class="dialog__title">
           <span class="spin" aria-hidden="true"><LoaderCircle size={18} strokeWidth={2} /></span>
-          Abriendo el instalador…
+          Instalando…
         </h2>
-        <p class="dialog__body">Sigue las indicaciones que aparezcan en pantalla.</p>
+        <p class="dialog__body">
+          La aplicación se va a cerrar un momento para reemplazarse. Se abrirá sola al terminar.
+        </p>
       {:else if fase === 'error'}
         <h2 id="up-title" class="dialog__title">
           <TriangleAlert size={18} strokeWidth={2} /> No se pudo actualizar
