@@ -1,0 +1,14 @@
+.github/workflows/build.yml
+  h_6241add5026f5b 26-29,67-73
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "dd2a160b14ae7ff1d090bb9c0ee2584c481d35f0",
+  "prompts": {},
+  "humans": {
+    "h_6241add5026f5b": {
+      "author": "Edu Navajas <eduardonco@ext.inditex.com>"
+    }
+  }
+}
