@@ -1,0 +1,19 @@
+.github/workflows/build.yml
+  s_42eca20d2be72f::t_83362e748997bc 108-116
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "72f1d340f105b696e2df28069b4c50e1df8dc8aa",
+  "prompts": {},
+  "sessions": {
+    "s_42eca20d2be72f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "22db127f-a5f4-43f3-97b5-64f7ded7df09",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Edu Navajas <eduardonco@ext.inditex.com>"
+    }
+  }
+}
