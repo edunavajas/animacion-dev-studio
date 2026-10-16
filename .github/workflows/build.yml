@@ -105,9 +105,15 @@ jobs:
           $exe = Get-ChildItem release -Filter '*.exe' | Where-Object { $_.Name -notlike '*unpacked*' } | Select-Object -First 1
           Write-Host 'Lanzando con: --updated /S --force-run'
           Start-Process -FilePath $exe.FullName -ArgumentList '--updated','/S','--force-run'
-          Start-Sleep -Seconds 30
-          $proc = Get-Process -Name 'animacion-dev Studio' -ErrorAction SilentlyContinue
-          if (-not $proc) { throw 'El instalador no relanzó la app tras la actualización' }
+          # La instalación silenciosa tarda ~1-2 min (medido: 74 s), así que hay que
+          # esperar a que aparezca el proceso en vez de dormir un rato fijo.
+          $proc = $null
+          for ($i = 0; $i -lt 40; $i++) {
+            Start-Sleep -Seconds 5
+            $proc = Get-Process -Name 'animacion-dev Studio' -ErrorAction SilentlyContinue
+            if ($proc) { break }
+          }
+          if (-not $proc) { throw 'El instalador no relanzó la app tras la actualización (esperados 200 s)' }
           Write-Host "La app se relanzó sola tras actualizar: OK (pid $($proc.Id -join ','))"
           $proc | Stop-Process -Force
       # Con un tag v* se publica la release y los instaladores quedan descargables.
