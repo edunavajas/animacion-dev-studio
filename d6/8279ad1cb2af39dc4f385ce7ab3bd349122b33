@@ -1,0 +1,16 @@
+docs/PHASES.md
+  h_6241add5026f5b 84-90
+src/renderer/src/lib/Preview.svelte
+  h_6241add5026f5b 25-28,48-53,106-108
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d68279ad1cb2af39dc4f385ce7ab3bd349122b33",
+  "prompts": {},
+  "humans": {
+    "h_6241add5026f5b": {
+      "author": "Edu Navajas <eduardonco@ext.inditex.com>"
+    }
+  }
+}
