@@ -88,6 +88,11 @@
   --dur-slow: 220ms;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* Velo y superficie de modales (en oscuro, el velo oscurece poco: hace falta
+     un escalón de tono para que el diálogo se separe). */
+  --scrim: rgba(18, 18, 32, 0.45);
+  --overlay-surface: var(--surface);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -119,6 +124,8 @@
     --info-fill: #1c2a44;
     --elev-2: 0 12px 32px rgba(0, 0, 0, 0.45);
     --elev-3: 0 24px 60px rgba(0, 0, 0, 0.55);
+    --scrim: rgba(0, 0, 0, 0.62);
+    --overlay-surface: var(--surface-raised);
   }
 }
 

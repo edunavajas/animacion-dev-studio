@@ -10,7 +10,7 @@
  * la descarga (p. ej. en un entorno sin red para el resto del build).
  */
 import { createRequire } from 'node:module'
-import { cp, mkdir, readdir, stat, writeFile } from 'node:fs/promises'
+import { cp, mkdir, readdir, rm, stat, writeFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -86,6 +86,29 @@ async function copyTemplates() {
   console.log(`  plantillas  ${dirs.length} de ejemplo → resources/templates`)
 }
 
+/**
+ * ffprobe-static trae binarios de TODAS las plataformas (233 MB). Se dejan solo
+ * los de destino: KEEP_PLATFORMS="darwin/arm64,darwin/x64" para builds cruzados.
+ */
+async function pruneFfprobe() {
+  const base = join(root, 'node_modules', 'ffprobe-static', 'bin')
+  if (!existsSync(base)) return
+  const keep = (process.env.KEEP_PLATFORMS || `${process.platform}/${process.arch}`)
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+  for (const plat of await readdir(base)) {
+    const platDir = join(base, plat)
+    if (!(await stat(platDir)).isDirectory()) continue
+    for (const arch of await readdir(platDir)) {
+      const key = `${plat}/${arch}`
+      if (keep.includes(key)) continue
+      await rm(join(platDir, arch), { recursive: true, force: true })
+      console.log(`  ffprobe podado ${key}`)
+    }
+  }
+}
+
 async function checkFfmpeg() {
   try {
     const ffmpeg = require('ffmpeg-static')
@@ -101,6 +124,7 @@ console.log('Preparando sidecars…')
 await copyPlayer()
 await copyTemplates()
 await fetchChrome()
+await pruneFfprobe()
 await checkFfmpeg()
 await writeFile(
   join(resources, '.sidecars-ok'),

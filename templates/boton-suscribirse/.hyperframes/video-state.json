@@ -34,8 +34,8 @@
   },
   "renders": {
     "latest": {
-      "id": "ffe96653-feda-4f3a-8464-b2a2a51d5b31",
-      "completedAt": 1792150719691,
+      "id": "f1bdd19e-3396-40de-a40d-c8742283509c",
+      "completedAt": 1792154330552,
       "output": "/var/folders/wd/f2z1pc153t59m8d2ls0t218h0000gq/T/studio-test-out.mov",
       "status": "completed",
       "revision": null

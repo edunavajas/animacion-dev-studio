@@ -98,8 +98,9 @@ class UiState {
     this.outputDir = prefs.outputDir ?? null
     if (prefs.background) this.background = prefs.background
     if (prefs.lastTemplateId && this.library.some((e) => e.id === prefs.lastTemplateId)) {
-      this.selectedId = prefs.lastTemplateId
-      this.values = await window.api.values.get(prefs.lastTemplateId)
+      // Se reabre con openTemplate para que también siembre los valores por defecto.
+      const entry = this.library.find((e) => e.id === prefs.lastTemplateId)!
+      await this.openTemplate(entry)
     }
     window.api.library.onThumbReady(({ id, thumbPath }) => {
       this.library = this.library.map((e) => (e.id === id ? { ...e, thumbPath } : e))
@@ -120,6 +121,16 @@ class UiState {
     })
     this.jobs = await window.api.exporter.list()
     this.ready = true
+    // Miniaturas que falten (p. ej. plantillas ya instaladas sin thumb.png).
+    void this.ensureThumbnails()
+  }
+
+  /** Genera en segundo plano las miniaturas que falten. Una sola vez por sesión. */
+  async ensureThumbnails(): Promise<void> {
+    for (const entry of this.library) {
+      if (entry.thumbPath) continue
+      await window.api.library.thumbnail(entry.id)
+    }
   }
 
   upsertJob(job: RenderJob): void {
@@ -179,6 +190,7 @@ class UiState {
       if (f.type === 'image' || f.type === 'video') continue
       defaults[f.id] = (f.default as string | number | boolean | undefined) ?? ''
     }
+    // Se parte de los valores guardados, y lo que falte cae al defecto del manifiesto.
     this.values = { ...defaults, ...saved }
     await window.api.prefs.set({ lastTemplateId: entry.id })
   }
@@ -206,7 +218,8 @@ class UiState {
 
   async setBackground(kind: PreviewBackground['kind']): Promise<void> {
     this.background = { kind }
-    await window.api.prefs.set({ background: this.background })
+    // Los proxies de $state no son clonables por IPC: se manda un objeto plano.
+    await window.api.prefs.set({ background: { kind } })
   }
 
   async deleteTemplate(entry: LibraryEntry): Promise<void> {

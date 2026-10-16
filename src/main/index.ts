@@ -1,12 +1,13 @@
-import { app, BrowserWindow, Menu, protocol, shell } from 'electron'
+import { app, BrowserWindow, Menu, nativeTheme, protocol, shell } from 'electron'
 import { existsSync } from 'node:fs'
-import { readFile, rm } from 'node:fs/promises'
+import { readFile, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { workDir } from './paths'
 import { log } from './logs'
 import { RenderManager } from './render'
 import { PreviewServer, mimeFor } from './previewServer'
 import { installBundledExamples, listLibrary } from './library'
+import { describeSidecars } from './sidecars'
 import { registerIpc } from './ipc'
 
 // El protocolo `studio:` sirve archivos locales (miniaturas, etc.) sin exponer
@@ -16,6 +17,7 @@ protocol.registerSchemesAsPrivileged([
 ])
 
 const isDev = !app.isPackaged
+const bootAt = Date.now()
 let mainWindow: BrowserWindow | null = null
 const renderManager = new RenderManager()
 const preview = new PreviewServer()
@@ -48,7 +50,46 @@ function createWindow(): void {
     }
   })
 
-  mainWindow.on('ready-to-show', () => mainWindow?.show())
+  mainWindow.on('ready-to-show', () => {
+    mainWindow?.show()
+    const ms = Date.now() - bootAt
+    log.info('ventana lista', { ms })
+    // `--bench` mide el arranque en frío hasta la primera ventana y sale.
+    if (process.argv.includes('--bench')) {
+      console.log(`startup: ${ms} ms`)
+      app.exit(0)
+    }
+  })
+
+  // `--screenshot=<ruta>`: captura la interfaz y sale. Sirve para revisar el
+  // diseño a ojo y para verificación automatizada, sin permisos de pantalla.
+  const shotArg = process.argv.find((a) => a.startsWith('--screenshot='))
+  if (shotArg) {
+    const out = shotArg.slice('--screenshot='.length)
+    mainWindow.webContents.once('did-finish-load', () => {
+      const delay = Number(process.env.STUDIO_SHOT_DELAY ?? 3000)
+      setTimeout(() => {
+        // STUDIO_SHOT_EXPORT=1 pulsa Cmd/Ctrl+E antes de capturar (revisar el diálogo).
+        const capture = async () => {
+          if (process.env.STUDIO_SHOT_EXPORT === '1') {
+            const modifiers: Array<'meta' | 'control'> =
+              process.platform === 'darwin' ? ['meta'] : ['control']
+            mainWindow?.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'E', modifiers })
+            mainWindow?.webContents.sendInputEvent({ type: 'keyUp', keyCode: 'E', modifiers })
+            await new Promise((r) => setTimeout(r, 900))
+          }
+          const img = await mainWindow!.webContents.capturePage()
+          await writeFile(out, img.toPNG())
+          console.log(`screenshot → ${out}`)
+          app.exit(0)
+        }
+        capture().catch((err) => {
+          console.error('no se pudo capturar', err)
+          app.exit(1)
+        })
+      }, delay)
+    })
+  }
 
   // Los enlaces externos se abren en el navegador, nunca dentro de la app.
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -130,6 +171,19 @@ if (!app.requestSingleInstanceLock()) {
     // Limpieza de temporales de ejecuciones anteriores (también tras un cierre sucio).
     await rm(workDir(), { recursive: true, force: true }).catch(() => {})
     log.info('app lista', { version: app.getVersion(), dev: isDev })
+    const sidecars = describeSidecars()
+    log.info('sidecars', sidecars)
+
+    // STUDIO_THEME=light|dark fuerza el tema (verificación de diseño).
+    const forced = process.env.STUDIO_THEME
+    if (forced === 'light' || forced === 'dark') nativeTheme.themeSource = forced
+
+    // `--diagnose` imprime el estado de componentes y sale (soporte y CI).
+    if (process.argv.includes('--diagnose')) {
+      console.log(JSON.stringify({ version: app.getVersion(), packaged: app.isPackaged, sidecars }, null, 2))
+      app.exit(sidecars.hyperframes.ok && sidecars.browser.ok && sidecars.ffmpeg.ok ? 0 : 1)
+      return
+    }
 
     // `studio://local/?p=<ruta>` → sirve un archivo local con su tipo correcto.
     protocol.handle('studio', async (request) => {

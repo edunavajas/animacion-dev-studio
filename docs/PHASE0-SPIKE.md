@@ -54,23 +54,32 @@ Electron, UI y preview son **un solo Chromium** en ambas plataformas.
 
 ## (b) Tamaño real del instalador (los sidecars mandan)
 
-Medido en `~/.cache/hyperframes/` y `node_modules/`:
+Medido **construyendo el instalador de verdad** (macOS arm64):
 
 | Componente | Tamaño |
 |---|---|
-| `chrome-headless-shell` (Chrome-for-Testing 152.0.7977.30) | **194 MB** (binario 160 MB) |
-| `hyperframes` (dist) | 22 MB |
-| deps de `hyperframes` (incluye `sharp`, `esbuild` nativos) | ~95 MB |
-| ffmpeg + ffprobe estáticos | ~70 MB |
+| `chrome-headless-shell` (Chrome-for-Testing 152.0.7977.30) | **192 MB** |
+| Runtime + reproductor de hyperframes | 0.6 MB |
+| `hyperframes` + dependencias (`sharp`, `esbuild`…) | ~120 MB |
+| ffmpeg | 43 MB |
+| ffprobe (solo la plataforma de destino) | 73 MB |
 | Electron runtime | ~200 MB |
-| **Total desempaquetado estimado** | **~580 MB** |
+| **App desempaquetada** | **715 MB** |
+| **Instalador `.dmg`** | **278 MB** |
 
-Cifra honesta: **el instalador supera con holgura los 250 MB**, y el motivo son
-los sidecars, no el shell. Tauri "ahorraría" ~200 MB de Electron pero **añade**
-el webview del sistema como segundo motor y no elimina los 194 MB de Chromium.
-No hay ganancia real → **Electron**.
+Dos recortes que valieron la pena:
 
-## (c) Render MOV con alpha desde el sidecar empaquetado (Mac)
+- `ffprobe-static` trae binarios de **cuatro** plataformas (233 MB). Se poda a la
+  de destino → 73 MB. Es lo que hace `pruneFfprobe()` en `scripts/fetch-sidecars.mjs`.
+- `resources/player`: solo se empaqueta el runtime (512 KB). El elemento
+  `<hyperframes-player>` (107 KB) se descartó al no resultar utilizable.
+
+Cifra honesta: **278 MB**, por encima de los 250 MB del criterio del brief. El
+motivo son los sidecars (192 MB de navegador), no el shell: Tauri "ahorraría"
+~200 MB de Electron pero **seguiría** llevando los 192 MB de Chromium y añadiría
+el webview del sistema. No hay ganancia real → **Electron**.
+
+## (c) Render MOV con alpha desde el sidecar empaquetado
 
 Ejecutado con la CLI real:
 
@@ -93,10 +102,42 @@ MOV : codec_name=prores  profile=4444  pix_fmt=yuva444p12le   ← plano alfa pre
 - Límite: `--resolution 4k` **no** combina con mov/webm (la ruta de supersampling
   no tiene canal alfa).
 
+### Prueba del PAQUETE (sin nada instalado)
+
+Se ejecutó el binario **ya empaquetado**, con entorno vacío
+(`env -i PATH=/usr/bin:/bin`), usando solo sus propios componentes:
+
+```
+env -i PATH=/usr/bin:/bin ELECTRON_RUN_AS_NODE=1 \
+  HYPERFRAMES_BROWSER_PATH=<app>/Contents/Resources/chrome/... \
+  HYPERFRAMES_FFMPEG_PATH=<app>/Contents/Resources/app.asar.unpacked/.../ffmpeg \
+  HYPERFRAMES_FFPROBE_PATH=<app>/Contents/Resources/app.asar.unpacked/.../ffprobe \
+  "<app>/Contents/MacOS/animacion-dev Studio" \
+  "<app>/Contents/Resources/app.asar.unpacked/node_modules/hyperframes/bin/hyperframes.mjs" \
+  render "<app>/Contents/Resources/templates/video-sugerido" \
+  --format mov --quality draft --strict-variables -o packaged.mov
+```
+
+Resultado: **1920×1080, `prores`, perfil `4444`, `yuva444p12le`**, 41.1 MB, 5 s.
+Es decir: **sin Node, sin Chrome y sin ffmpeg del sistema** (PATH reducido a
+`/usr/bin:/bin`). Es el criterio de aceptación de la Fase 3 en macOS.
+
+`--diagnose` confirma además que el paquete resuelve sus cuatro componentes:
+`hyperframes ok`, `browser ok (bundled)`, `ffmpeg ok`, `ffprobe ok`.
+
 ## (d) Arranque en frío
 
-Pendiente de medir sobre el binario Electron ya construido (Fase 3). Objetivo
-del brief: **<2 s**. Se medirá con `scripts/bench-startup.mjs` y se reportará.
+Medido con `npm run bench:startup` (`--bench`: del inicio del proceso a la primera
+ventana lista), **app empaquetada**:
+
+| Medición | Tiempo |
+|---|---|
+| Primera (disco frío) | 825 ms |
+| Segunda | 407 ms |
+| Tercera | 391 ms |
+
+**Cumple** el objetivo de <2 s. En desarrollo (sin empaquetar) el rango es
+444–935 ms.
 
 ## Adquisición del navegador (offline — crítico)
 
@@ -135,8 +176,14 @@ que hay que pagar con cualquier shell.
 
 ## NO verificado (honestidad)
 
-- Fidelidad pixel a pixel `chrome-headless-shell` vs Chromium de Electron
-  (misma familia; se asume equivalente, no se ha diff-eado).
-- Prueba en Windows 11 real y en Premiere (Fase 3, requiere VM/máquina).
-- Descarga real del navegador (ya estaba en caché); tamaño/tiempo provienen del
-  código de `@puppeteer/browsers`, no de una descarga observada.
+- **Windows 11 real**: no hay máquina disponible en este entorno. Todo el
+  empaquetado de Windows (NSIS/MSI) se confía a CI; falta instalar y exportar en
+  una VM limpia.
+- **Adobe Premiere**: no hay Premiere en este equipo. El alpha está verificado con
+  `ffprobe` (`yuva444p12le`), no importando el MOV en Premiere.
+- **Fidelidad pixel a pixel** entre el Chromium de Electron y
+  `chrome-headless-shell`: son familias distintas (Electron 44 vs Chrome 152). No
+  se ha diff-eado; sí se ha comprobado que la preview usa el **mismo runtime** y el
+  **mismo mecanismo de variables** que el render.
+- **Descarga real del navegador**: ya estaba en caché; el tamaño procede del
+  directorio descargado (192 MB), no de una descarga cronometrada.

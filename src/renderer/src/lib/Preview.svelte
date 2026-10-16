@@ -40,6 +40,7 @@
     if (d.type === 'ready') {
       loading = false
       post({ type: 'background', kind: ui.background.kind })
+      post({ type: 'theme', dark: window.matchMedia('(prefers-color-scheme: dark)').matches })
     } else if (d.type === 'time') {
       time = d.t ?? 0
       if (d.duration && d.duration > 0) reported = d.duration
@@ -58,7 +59,12 @@
     loading = true
     error = null
     try {
-      const { url } = await window.api.preview.start(entry.id, values, ui.background)
+      // Los proxies de $state no cruzan el IPC: se envían copias planas.
+      const { url } = await window.api.preview.start(
+        entry.id,
+        $state.snapshot(values) as FieldValues,
+        { kind: ui.background.kind }
+      )
       frameOrigin = new URL(url).origin
       if (frame) frame.src = url
     } catch (err) {
@@ -133,13 +139,11 @@
 <div class="preview">
   <div class="preview__stage">
     <div class="preview__mat" class:preview__mat--checker={ui.background.kind === 'checker'} class:preview__mat--light={ui.background.kind === 'light'} class:preview__mat--dark={ui.background.kind === 'dark'}>
-      {#if frame}
-        <iframe
-          bind:this={frame}
-          title="Vista previa de {entry.name}"
-          allow="autoplay"
-        ></iframe>
-      {/if}
+      <iframe
+        bind:this={frame}
+        title="Vista previa de {entry.name}"
+        allow="autoplay"
+      ></iframe>
 
       {#if loading && !error}
         <div class="preview__overlay"><span class="spinner" aria-hidden="true"></span> Preparando la vista previa…</div>

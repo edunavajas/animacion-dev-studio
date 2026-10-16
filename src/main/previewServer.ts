@@ -94,14 +94,17 @@ export function hostPage(compositionSrc: string, width: number, height: number):
 <style>
   html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
   #stage { position: fixed; inset: 0; display: grid; place-items: center; }
-  #stage.checker { background-color: #ffffff;
+  /* Cuadros de transparencia: se adaptan al tema para no deslumbrar en oscuro. */
+  #stage.checker { --ca: #ffffff; --cb: #e7e7ef;
+    background-color: var(--ca);
     background-image:
-      linear-gradient(45deg, #E7E7EF 25%, transparent 25%),
-      linear-gradient(-45deg, #E7E7EF 25%, transparent 25%),
-      linear-gradient(45deg, transparent 75%, #E7E7EF 75%),
-      linear-gradient(-45deg, transparent 75%, #E7E7EF 75%);
+      linear-gradient(45deg, var(--cb) 25%, transparent 25%),
+      linear-gradient(-45deg, var(--cb) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, var(--cb) 75%),
+      linear-gradient(-45deg, transparent 75%, var(--cb) 75%);
     background-size: 24px 24px;
     background-position: 0 0, 0 12px, 12px -12px, -12px 0; }
+  #stage.checker.dark { --ca: #31313f; --cb: #262634; }
   #stage.light { background: #FFFFFF; }
   #stage.dark { background: #14141C; }
   /* Posicionamiento explícito: el contenedor es mayor que el hueco, así que
@@ -125,6 +128,7 @@ export function hostPage(compositionSrc: string, width: number, height: number):
       var wrapper = document.getElementById('wrapper');
       var frame = document.getElementById('frame');
       var src = ${JSON.stringify(compositionSrc)};
+      var dark = false;
 
       function post(msg) { try { parent.postMessage(msg, '*'); } catch (e) {} }
       function player() {
@@ -170,8 +174,10 @@ export function hostPage(compositionSrc: string, width: number, height: number):
         if (d.type === 'reload') { frame.src = src + '?__v=' + Date.now(); announced = false; return; }
         if (d.type === 'background') {
           stage.className = d.kind === 'light' ? 'light' : d.kind === 'dark' ? 'dark' : 'checker';
+          stage.classList.toggle('dark', dark && stage.classList.contains('checker'));
           return;
         }
+        if (d.type === 'theme') { dark = !!d.dark; stage.classList.toggle('dark', dark && stage.classList.contains('checker')); return; }
         var p = player();
         if (!p) return;
         try {

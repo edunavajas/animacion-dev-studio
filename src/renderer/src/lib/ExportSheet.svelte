@@ -250,7 +250,7 @@
     display: grid;
     place-items: center;
     padding: var(--sp-5);
-    background: color-mix(in srgb, #101018 42%, transparent);
+    background: var(--scrim);
     overscroll-behavior: contain;
   }
 
@@ -259,7 +259,8 @@
     max-height: min(84vh, 760px);
     display: flex;
     flex-direction: column;
-    background: var(--surface);
+    background: var(--overlay-surface);
+    border: 1px solid var(--border);
     border-radius: var(--r-lg);
     box-shadow: var(--elev-3);
     overflow: hidden;

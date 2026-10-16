@@ -41,13 +41,14 @@
     display: grid;
     place-items: center;
     padding: var(--sp-5);
-    background: color-mix(in srgb, #101018 42%, transparent);
+    background: var(--scrim);
   }
 
   .dialog {
     width: min(460px, 100%);
     padding: var(--sp-5);
-    background: var(--surface);
+    background: var(--overlay-surface);
+    border: 1px solid var(--border);
     border-radius: var(--r-lg);
     box-shadow: var(--elev-3);
   }
