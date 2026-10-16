@@ -206,8 +206,11 @@ Los instaladores olvidados en `userData/updates/` no se limpian solos todavía.
 - Sin soporte de Linux (el código es portable, pero no se distribuye).
 - Windows 11 x64 es el objetivo en Windows; macOS 14+ en Mac (arm64).
 - **Verificado**: la exportación MOV con alpha funciona desde el paquete, con
-  entorno vacío, en macOS; CI compila, empaqueta y valida los componentes en
-  Windows 11 (NSIS + MSI).
-- **Pendiente**: abrir la app y exportar en un Windows 11 de escritorio real, y
-  confirmar la importación del MOV en Premiere. Ver el detalle de qué está probado
-  y qué no en [`docs/PHASE0-SPIKE.md`](docs/PHASE0-SPIKE.md).
+  entorno vacío, en macOS. En Windows, CI **instala de verdad** el `.exe` en
+  silencio, comprueba que la copia instalada resuelve sus cuatro componentes y
+  verifica que una actualización (`--updated /S --force-run`) **relanza la app
+  sola**.
+- **Pendiente**: que una persona use la interfaz en un Windows de escritorio (la
+  instalación y la actualización ya están verificadas automáticamente, pero nadie
+  ha hecho clic), y confirmar la importación del MOV en Premiere. Ver el detalle de
+  qué está probado y qué no en [`docs/PHASE0-SPIKE.md`](docs/PHASE0-SPIKE.md).

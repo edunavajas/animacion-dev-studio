@@ -107,12 +107,22 @@ instaladores para macOS y Windows, y CI en ambas plataformas.
 - `--diagnose` del paquete: los cuatro componentes `ok` (navegador `source:
   bundled`).
 - **CI verde en los cuatro jobs** (verificación y instaladores × macOS y Windows).
-  El job de Windows ejecuta la suite completa (26/26) y construye NSIS + MSI.
+  El job de Windows ejecuta la suite completa (53/53) y construye NSIS + MSI.
+- **Instalador de Windows probado de verdad en CI**, no solo construido:
+  - Instalación silenciosa (`/S`): la app queda en `LOCALAPPDATA\Programs` y la
+    copia instalada pasa `--diagnose` con **4/4 componentes ok**.
+  - Actualización con las **mismas banderas que usa la app**
+    (`--updated /S --force-run`): el instalador **relanza la app solo**. Es el
+    comportamiento que importa: actualizar en Windows no requiere tocar nada.
+  - Medido: la instalación silenciosa tarda ~74 s.
+- Descarga de la actualización verificada contra la release real: 281 MB con
+  progreso, y el `sha256` comparado con el que publica GitHub (aceptada cuando
+  coincide, rechazada y borrada cuando se manipula).
 - La app arranca, instala los ejemplos la primera vez y genera miniaturas.
 
-**No probado.** Abrir la ventana y exportar en un **Windows 11 de escritorio**
-(CI verifica componentes, no interacción). Tampoco se ha firmado ni notarizado
-(ver [`SIGNING.md`](SIGNING.md)).
+**No probado.** Que una persona use la **interfaz** en Windows (la instalación y la
+actualización sí están verificadas automáticamente, pero nadie ha hecho clic). Y
+Premiere. Tampoco se ha firmado ni notarizado (ver [`SIGNING.md`](SIGNING.md)).
 
 **Riesgos abiertos.**
 
