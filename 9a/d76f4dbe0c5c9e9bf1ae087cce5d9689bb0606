@@ -1,0 +1,21 @@
+src/renderer/src/lib/UpdatePrompt.svelte
+  s_42eca20d2be72f::t_fd536a6b1df70d 1-195
+test/integration.ts
+  s_42eca20d2be72f::t_6025cdbdd043df 21,169-190
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9ad76f4dbe0c5c9e9bf1ae087cce5d9689bb0606",
+  "prompts": {},
+  "sessions": {
+    "s_42eca20d2be72f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "22db127f-a5f4-43f3-97b5-64f7ded7df09",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Edu Navajas <eduardonco@ext.inditex.com>"
+    }
+  }
+}
