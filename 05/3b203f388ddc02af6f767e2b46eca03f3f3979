@@ -1,0 +1,19 @@
+electron-builder.yml
+  s_1b953e65578a84::t_254eda18603552 40-49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "053b203f388ddc02af6f767e2b46eca03f3f3979",
+  "prompts": {},
+  "sessions": {
+    "s_1b953e65578a84": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c0eaa898-921a-44b8-b83e-e3f3f8dcd343",
+        "model": "unknown"
+      },
+      "human_author": "Edu Navajas <eduardonco@ext.inditex.com>"
+    }
+  }
+}
