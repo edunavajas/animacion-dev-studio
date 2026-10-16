@@ -87,22 +87,66 @@ export async function getEntry(id: string): Promise<LibraryEntry | null> {
   return all.find((e) => e.id === id) ?? null
 }
 
+/** Límite de seguridad al descomprimir: evita llenar el disco con un .zip enorme. */
+const MAX_UNCOMPRESSED_BYTES = 2 * 1024 ** 3
+
 /** Resuelve la carpeta de plantilla dentro de una ruta soltada (carpeta o .zip). */
 async function resolveSource(srcPath: string): Promise<{ dir: string; origin: string; temp?: string }> {
-  const st = await stat(srcPath)
-  if (st.isDirectory()) return { dir: srcPath, origin: basename(srcPath) }
-  if (extname(srcPath).toLowerCase() === '.zip') {
-    const AdmZip = require('adm-zip') as new (p: string) => { extractAllTo: (d: string) => void }
+  let st
+  try {
+    st = await stat(srcPath)
+  } catch {
+    throw new Error('No se encuentra esa carpeta o archivo. ¿Se movió o se desmontó?')
+  }
+
+  if (st.isDirectory()) {
+    const entries = await readdir(srcPath).catch(() => null)
+    if (entries === null) throw new Error('No se puede leer esa carpeta (¿permisos?).')
+    if (entries.length === 0) throw new Error('Esa carpeta está vacía.')
+    return { dir: srcPath, origin: basename(srcPath) }
+  }
+
+  if (st.isFile() && extname(srcPath).toLowerCase() === '.zip') {
     const temp = join(workDir(), `import-${Date.now()}`)
     await mkdir(temp, { recursive: true })
-    new AdmZip(srcPath).extractAllTo(temp)
+    try {
+      const AdmZip = require('adm-zip') as new (p: string) => {
+        getEntries: () => { header?: { size?: number }; entryName: string }[]
+        extractAllTo: (d: string) => void
+      }
+      const zip = new AdmZip(srcPath)
+      const entries = zip.getEntries()
+      if (!entries.length) throw new Error('El archivo .zip está vacío.')
+      let total = 0
+      for (const e of entries) {
+        const size = e.header?.size
+        if (typeof size === 'number') total += size
+      }
+      if (total > MAX_UNCOMPRESSED_BYTES) {
+        throw new Error('El .zip se descomprime en más de 2 GB. ¿Seguro que es una plantilla?')
+      }
+      zip.extractAllTo(temp)
+    } catch (err) {
+      await rm(temp, { recursive: true, force: true }).catch(() => {})
+      const msg = err instanceof Error ? err.message : String(err)
+      throw new Error(
+        /Invalid|Corrupted|end of central directory|missing/i.test(msg)
+          ? 'El archivo .zip está dañado o no es un .zip de verdad.'
+          : msg
+      )
+    }
     // Un .zip suele traer una carpeta raíz: si hay una sola, se usa esa.
     const children = (await readdir(temp, { withFileTypes: true })).filter((c) => c.isDirectory())
     const hasManifestHere = existsSync(join(temp, 'template.json'))
     const dir = !hasManifestHere && children.length === 1 ? join(temp, children[0].name) : temp
     return { dir, origin: basename(srcPath), temp }
   }
-  throw new Error('Solo se pueden añadir carpetas o archivos .zip.')
+
+  throw new Error(
+    st.isFile()
+      ? 'Eso es un archivo, no una carpeta de plantilla. Arrastra la carpeta o un .zip.'
+      : 'Solo se pueden añadir carpetas o archivos .zip.'
+  )
 }
 
 /**

@@ -4,7 +4,7 @@ import { cp, mkdir, rm, writeFile, readdir, copyFile } from 'node:fs/promises'
 import { extname, join } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { framesCacheDir, workDir } from './paths'
-import { hyperframesCliPath, isLowMemory, sidecarEnv } from './sidecars'
+import { hyperframesCliPath, isLowMemory, ffprobePath, sidecarEnv } from './sidecars'
 import { log } from './logs'
 import type { ExportFormat, FieldSpec, FieldValues, RenderJob, TemplateManifest } from '../shared/types'
 
@@ -317,7 +317,11 @@ export class RenderManager extends EventEmitter {
       } else if (code === 0) {
         job.status = 'done'
         job.progress = 100
-        job.detail = 'Listo'
+        // Se informa si la salida lleva sonido (no para secuencias de imágenes).
+        if (!job.isDirectory) {
+          job.hasAudio = await probeHasAudio(job.outputPath)
+        }
+        job.detail = job.hasAudio === true ? 'Listo (con sonido)' : 'Listo'
       } else {
         job.status = 'error'
         job.error = humanizeFailure(stderr, code)
@@ -372,6 +376,42 @@ export function humanizeFailure(stderr: string, code: number | null): string {
   for (const [k, v] of Object.entries(CODES_ES)) if (s.includes(k)) return v
   const first = s.split('\n').find((l) => l.trim() && !l.startsWith('    at '))
   return first?.trim() || `La exportación falló (código ${code ?? '?'}).`
+}
+
+/**
+ * ¿La salida tiene audio? Se comprueba con ffprobe para poder decírselo al
+ * usuario: es la única forma honesta de responder a «¿se escuchará?».
+ */
+export function probeHasAudio(file: string): Promise<boolean | undefined> {
+  const fp = ffprobePath()
+  if (!fp) return Promise.resolve(undefined)
+  return new Promise((resolve) => {
+    let out = ''
+    let child: ChildProcess
+    try {
+      child = spawn(
+        fp,
+        ['-v', 'error', '-select_streams', 'a', '-show_entries', 'stream=index', '-of', 'csv=p=0', file],
+        { windowsHide: true }
+      )
+    } catch {
+      return resolve(undefined)
+    }
+    const timer = setTimeout(() => {
+      killTree(child)
+      resolve(undefined)
+    }, 20_000)
+    child.stdout?.setEncoding('utf8')
+    child.stdout?.on('data', (c: string) => (out += c))
+    child.on('error', () => {
+      clearTimeout(timer)
+      resolve(undefined)
+    })
+    child.on('close', () => {
+      clearTimeout(timer)
+      resolve(out.trim().length > 0)
+    })
+  })
 }
 
 /** Mata el árbol de procesos del render (hijos incluidos) en ambas plataformas. */

@@ -10,19 +10,23 @@
  *  4. El servidor de preview sirve el host, el runtime y la composición con las
  *     variables inyectadas IGUAL que el motor de render.
  */
-import { app } from 'electron'
-import { rm } from 'node:fs/promises'
+import { app, BrowserWindow } from 'electron'
+import { cp, rm } from 'node:fs/promises'
 import { spawn } from 'node:child_process'
 import { join } from 'node:path'
 import { PreviewServer } from '../src/main/previewServer'
 import { listLibrary, importFromPath, deleteTemplate, installBundledExamples } from '../src/main/library'
 import { parseManifest, extractDeclaredVariables, crossCheck } from '../src/main/manifest'
-import { buildVariablesPayload } from '../src/main/render'
+import { buildVariablesPayload, probeHasAudio } from '../src/main/render'
 import { hyperframesCliPath, browserPath, ffmpegPath, ffprobePath, sidecarEnv } from '../src/main/sidecars'
 
 // Al ejecutar un script suelto, Electron no lee el nombre del package.json:
 // se fija para que userData (y por tanto la biblioteca) sea el de la app real.
 app.setName('animacion-dev-studio')
+
+// Sin este listener, Electron cierra la app en cuanto se destruye la última
+// ventana (comportamiento por defecto) y el test se corta a medias.
+app.on('window-all-closed', () => {})
 
 let failures = 0
 let checks = 0
@@ -136,7 +140,7 @@ async function main(): Promise<void> {
   await rm(emptyDir, { recursive: true, force: true })
   await import('node:fs/promises').then((fs) => fs.mkdir(emptyDir, { recursive: true }))
   const res = await importFromPath(emptyDir)
-  check('carpeta sin template.json se rechaza', !res.ok && res.issues.some((i) => i.code === 'manifestMissing'))
+  check('carpeta vacía se rechaza', !res.ok && res.issues.some((i) => i.level === 'error'))
 
   console.log('\n== render MOV con alpha (sidecar empaquetado) ==')
   const out = join(app.getPath('temp'), 'studio-test-out.mov')
@@ -144,9 +148,137 @@ async function main(): Promise<void> {
   const ok = await runRender(out)
   check('el render terminó con éxito', ok)
 
+  console.log('\n== audio: la exportación conserva el sonido ==')
+  const audioTpl = join(app.getAppPath(), 'test', 'fixtures', 'audio')
+  const audioOut = join(app.getPath('temp'), 'studio-test-audio.mov')
+  await rm(audioOut, { force: true })
+  const audioOk = await runRender(audioOut, audioTpl, {})
+  check('el render del fixture con sonido termina', audioOk)
+  if (audioOk) {
+    const hasAudio = await probeHasAudio(audioOut)
+    check('la salida MOV tiene pista de audio', hasAudio === true, `hasAudio=${hasAudio}`)
+  }
+
+  console.log('\n== audio: la vista previa reproduce la media ==')
+  await checkPreviewAudio(server, audioTpl)
+
+  console.log('\n== importación: entradas inválidas no revientan ==')
+  await checkBadImports()
+
   console.log(`\n${checks - failures}/${checks} comprobaciones OK`)
   if (failures > 0) console.log(`${failures} FALLOS`)
   app.exit(failures > 0 ? 1 : 0)
+}
+
+/** La preview debe ARRANCAR la media y aceptar volumen/silencio del host. */
+async function checkPreviewAudio(server: PreviewServer, templateDir: string): Promise<void> {
+  const raw = JSON.parse(await readFileText(join(templateDir, 'template.json')))
+  const { manifest } = parseManifest(raw)
+  if (!manifest) {
+    check('fixture de audio con manifiesto válido', false)
+    return
+  }
+  const url = await server.start()
+  server.setSession({
+    templateDir,
+    manifest,
+    values: {},
+    background: { kind: 'dark' }
+  })
+
+  const win = new BrowserWindow({ width: 900, height: 600, show: false })
+  await win.loadURL(url.split('?')[0] + '/')
+  await new Promise((r) => setTimeout(r, 7000))
+
+  const read = () =>
+    win.webContents.executeJavaScript(`(() => {
+      const d = document.getElementById('frame').contentDocument;
+      const v = d && d.getElementById('v');
+      return v ? { paused: v.paused, muted: v.muted, volume: v.volume, bytes: v.webkitAudioDecodedByteCount } : null;
+    })()`)
+
+  const state = await read()
+  check('la media de la composición existe', Boolean(state))
+  check('la media se reproduce sola', state ? state.paused === false : false, `paused=${state?.paused}`)
+  check('hay audio decodificándose', state ? state.bytes > 0 : false, `bytes=${state?.bytes}`)
+  check('no arranca silenciada', state ? state.muted === false : false)
+
+  // El volumen se pide por el protocolo del runtime (escribir .volume no dura).
+  await win.webContents.executeJavaScript(`window.postMessage({type:'volume', value:0.3}, '*'); true`)
+  await new Promise((r) => setTimeout(r, 900))
+  const vol = await read()
+  check('el volumen maestro se aplica', vol ? Math.abs(vol.volume - 0.3) < 0.02 : false, `volume=${vol?.volume}`)
+
+  await win.webContents.executeJavaScript(`window.postMessage({type:'muted', value:true}, '*'); true`)
+  await new Promise((r) => setTimeout(r, 600))
+  const mut = await read()
+  check('el silencio se aplica', mut ? mut.muted === true : false)
+
+  win.destroy()
+  server.clearSession()
+}
+
+/** Ninguna entrada mala debe lanzar excepción: siempre un resultado legible. */
+async function checkBadImports(): Promise<void> {
+  const tmp = join(app.getPath('temp'), 'studio-bad-imports')
+  await rm(tmp, { recursive: true, force: true })
+  await import('node:fs/promises').then((fs) => fs.mkdir(tmp, { recursive: true }))
+
+  const cases: { name: string; path: string; expectCode?: string }[] = [
+    { name: 'ruta que no existe', path: join(tmp, 'no-existe') },
+    { name: 'un archivo que no es .zip', path: join(app.getAppPath(), 'package.json') },
+    { name: 'carpeta vacía', path: tmp }
+  ]
+
+  // Carpeta con ficheros pero sin template.json
+  const noManifest = join(tmp, 'sin-manifiesto')
+  await import('node:fs/promises').then((fs) => fs.mkdir(noManifest, { recursive: true }))
+  await import('node:fs/promises').then((fs) =>
+    fs.writeFile(join(noManifest, 'index.html'), '<html></html>', 'utf8')
+  )
+  cases.push({ name: 'carpeta sin template.json', path: noManifest, expectCode: 'manifestMissing' })
+
+  // Carpeta con template.json ilegible
+  const badJson = join(tmp, 'json-roto')
+  await import('node:fs/promises').then((fs) => fs.mkdir(badJson, { recursive: true }))
+  await import('node:fs/promises').then((fs) =>
+    fs.writeFile(join(badJson, 'template.json'), '{ esto no es json', 'utf8')
+  )
+  // Con index.html presente, el fallo que debe salir es el del JSON, no el del index.
+  await import('node:fs/promises').then((fs) =>
+    fs.writeFile(join(badJson, 'index.html'), '<html></html>', 'utf8')
+  )
+  cases.push({ name: 'template.json ilegible', path: badJson, expectCode: 'invalidJson' })
+
+  // .zip corrupto
+  const badZip = join(tmp, 'roto.zip')
+  await import('node:fs/promises').then((fs) => fs.writeFile(badZip, 'PK\u0003\u0004basura', 'utf8'))
+  cases.push({ name: '.zip corrupto', path: badZip })
+
+  for (const c of cases) {
+    let threw: unknown = null
+    let result: Awaited<ReturnType<typeof importFromPath>> | null = null
+    try {
+      result = await importFromPath(c.path)
+    } catch (err) {
+      threw = err
+    }
+    const ok = threw === null && result !== null && result.ok === false && result.issues.length > 0
+    check(
+      `«${c.name}» se rechaza con mensaje (sin excepción)`,
+      ok,
+      threw ? `excepción: ${String(threw)}` : `issues=${result?.issues.length ?? 0}`
+    )
+    if (c.expectCode && result) {
+      check(`«${c.name}» con el código esperado`, result.issues.some((i) => i.code === c.expectCode))
+    }
+  }
+
+  await rm(tmp, { recursive: true, force: true })
+}
+
+async function readFileText(p: string): Promise<string> {
+  return (await import('node:fs/promises')).readFile(p, 'utf8')
 }
 
 /**
@@ -191,26 +323,37 @@ function spawnHeadlessScreenshot(url: string, out: string): Promise<boolean> {
   })
 }
 
-function runRender(out: string): Promise<boolean> {
-  return new Promise((resolve) => {
-    const templateDir = join(app.getAppPath(), 'templates', 'boton-suscribirse')
+/**
+ * Renderiza una plantilla con la CLI real. Se trabaja sobre una COPIA temporal
+ * porque hyperframes escribe estado (`.hyperframes/`) en el directorio de entrada
+ * y no queremos ensuciar el repo ni la biblioteca del usuario.
+ */
+async function runRender(
+  out: string,
+  templateDir = join(app.getAppPath(), 'templates', 'boton-suscribirse'),
+  vars: Record<string, string> = { subs: '1 K' }
+): Promise<boolean> {
+  const staged = join(app.getPath('temp'), `render-stage-${Date.now()}`)
+  await cp(templateDir, staged, { recursive: true, force: true })
+
+  const ok = await new Promise<boolean>((resolve) => {
     const args = [
       hyperframesCliPath(),
       'render',
-      templateDir,
+      staged,
       '--format',
       'mov',
       '--quality',
       'draft',
       '--variables',
-      JSON.stringify({ subs: '1 K' }),
+      JSON.stringify(vars),
       '--strict-variables',
       '-o',
       out
     ]
     const child = spawn(process.execPath, args, {
       env: sidecarEnv({ ELECTRON_RUN_AS_NODE: '1' }),
-      cwd: templateDir,
+      cwd: staged,
       windowsHide: true
     })
     let err = ''
@@ -226,6 +369,9 @@ function runRender(out: string): Promise<boolean> {
       resolve(code === 0)
     })
   })
+
+  await rm(staged, { recursive: true, force: true }).catch(() => {})
+  return ok
 }
 
 app.whenReady().then(() =>

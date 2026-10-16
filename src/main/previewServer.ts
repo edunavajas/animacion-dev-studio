@@ -130,10 +130,35 @@ export function hostPage(compositionSrc: string, width: number, height: number):
       var src = ${JSON.stringify(compositionSrc)};
       var dark = false;
 
+      // Audio: volumen maestro × el "data-volume" de cada elemento, para no
+      // pisar la mezcla que haya hecho quien autorizó la plantilla.
+      var masterVolume = 1;
+      var muted = false;
+      var wantPlay = true;
+      var announced = false;
+      var kickTimer = null;
+
       function post(msg) { try { parent.postMessage(msg, '*'); } catch (e) {} }
-      function player() {
-        try { var c = frame.contentWindow; return (c && c.__player) || null; } catch (e) { return null; }
+      function cw() { try { return frame.contentWindow; } catch (e) { return null; } }
+      function player() { var c = cw(); return (c && c.__player) || null; }
+
+      // Volumen y silencio se mandan al PROTOCOLO DEL RUNTIME, no escribiendo
+      // .volume en los elementos: el runtime reescribe los volúmenes en cada
+      // sincronización de media, así que tocarlos a mano no dura nada. Su
+      // mensaje de control aplica "volumen maestro × data-volume" de cada clip.
+      // (Sin "protocolVersion" el runtime lo trata como legacy y lo acepta.)
+      function sendControl(action, extra) {
+        var c = cw();
+        if (!c) return;
+        var msg = { source: 'hf-parent', type: 'control', action: action };
+        if (extra) for (var k in extra) msg[k] = extra[k];
+        try { c.postMessage(msg, '*'); } catch (e) {}
       }
+      function pushAudio() {
+        sendControl('set-volume', { volume: masterVolume });
+        sendControl('set-muted', { muted: muted });
+      }
+
       // Escala la composición (W×H) al hueco disponible y la centra, sin deformar.
       function fit() {
         var r = stage.getBoundingClientRect();
@@ -147,42 +172,72 @@ export function hostPage(compositionSrc: string, width: number, height: number):
       fit();
       window.addEventListener('resize', fit);
 
-      var announced = false;
+      // El runtime está disponible mucho antes de que la media esté lista: si se
+      // llama a play() una sola vez, la composición se queda parada. Se insiste
+      // hasta que de verdad reproduce.
+      function kickPlay() {
+        clearTimeout(kickTimer);
+        var tries = 0;
+        (function step() {
+          var p = player();
+          if (!p || !wantPlay) return;
+          var playing = false;
+          try { playing = p.isPlaying ? !!p.isPlaying() : false; } catch (e) {}
+          if (!playing) { try { p.play(); } catch (e) {} }
+          if (!playing && tries++ < 24) kickTimer = setTimeout(step, 250);
+        })();
+      }
+
       function announce() {
         if (announced) return;
         announced = true;
         post({ type: 'ready' });
-        var p = player();
-        if (p) { try { p.play(); } catch (e) {} }
+        // Tras (re)cargar, el runtime arranca con volumen 1: se reafirma el nuestro.
+        pushAudio();
+        if (wantPlay) kickPlay();
       }
       setInterval(function () { if (player()) announce(); }, 40);
       // Si el runtime no aparece, no se deja el aviso de carga colgado.
       setTimeout(announce, 8000);
 
+      // Reconciliación periódica: reproduce si toca, y mantiene volumen/silencio.
       setInterval(function () {
         var p = player();
         if (!p) return;
-        var t = 0, d = 0, playing = false;
+        var playing = false;
+        if (wantPlay) {
+          try { playing = p.isPlaying ? !!p.isPlaying() : false; } catch (e) {}
+          if (!playing) kickPlay();
+        }
+        var t = 0, d = 0;
         try { t = p.getTime ? p.getTime() : 0; } catch (e) {}
         try { d = p.getDuration ? p.getDuration() : 0; } catch (e) {}
-        try { playing = p.isPlaying ? !!p.isPlaying() : false; } catch (e) {}
+        // Se informa del estado REAL, no de la intención: si la media no arranca,
+        // la interfaz debe enterarse.
+        try { playing = p.isPlaying ? !!p.isPlaying() : playing; } catch (e) {}
         post({ type: 'time', t: t, duration: d, paused: !playing });
-      }, 100);
+      }, 250);
 
       window.addEventListener('message', function (ev) {
         var d = ev.data || {};
-        if (d.type === 'reload') { frame.src = src + '?__v=' + Date.now(); announced = false; return; }
+        if (d.type === 'reload') {
+          frame.src = src + '?__v=' + Date.now();
+          announced = false;
+          return;
+        }
         if (d.type === 'background') {
           stage.className = d.kind === 'light' ? 'light' : d.kind === 'dark' ? 'dark' : 'checker';
           stage.classList.toggle('dark', dark && stage.classList.contains('checker'));
           return;
         }
         if (d.type === 'theme') { dark = !!d.dark; stage.classList.toggle('dark', dark && stage.classList.contains('checker')); return; }
+        if (d.type === 'volume') { masterVolume = Math.max(0, Math.min(1, Number(d.value))); pushAudio(); return; }
+        if (d.type === 'muted') { muted = !!d.value; pushAudio(); return; }
         var p = player();
         if (!p) return;
         try {
-          if (d.type === 'play') p.play();
-          else if (d.type === 'pause') p.pause();
+          if (d.type === 'play') { wantPlay = true; kickPlay(); }
+          else if (d.type === 'pause') { wantPlay = false; clearTimeout(kickTimer); p.pause(); }
           else if (d.type === 'seek') p.seek(d.t);
         } catch (e) {}
       });

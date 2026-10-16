@@ -13,6 +13,10 @@ export interface Prefs {
   values: Record<string, FieldValues>
   /** Preferencia de fondo de la preview. */
   background?: PreviewBackground
+  /** Volumen maestro de la vista previa (0..1). */
+  volume?: number
+  /** Vista previa silenciada. */
+  muted?: boolean
 }
 
 const EMPTY: Prefs = { values: {} }

@@ -147,6 +147,8 @@ export interface RenderJob {
   error?: string
   /** Estructura de la salida (fichero o carpeta). */
   isDirectory?: boolean
+  /** Si la salida tiene pista de audio (comprobado con ffprobe). */
+  hasAudio?: boolean
 }
 
 export interface AppInfo {

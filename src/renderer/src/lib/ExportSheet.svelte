@@ -205,7 +205,11 @@
                   {:else if job.status === 'done'}
                     <div class="job__row">
                       <span class="job__detail job__detail--ok">
-                        <Check size={13} strokeWidth={2} /> Guardado
+                        <Check size={13} strokeWidth={2} /> Guardado{job.hasAudio === true
+                          ? ' · con sonido'
+                          : job.hasAudio === false
+                            ? ' · sin sonido'
+                            : ''}
                       </span>
                       <button
                         class="btn btn--ghost btn--sm"

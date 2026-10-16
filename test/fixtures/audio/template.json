@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "prueba-audio",
+  "name": "Prueba de audio",
+  "description": "Fixture de verificación: vídeo con sonido.",
+  "duration": 5,
+  "resolution": "landscape",
+  "fps": 30,
+  "fields": [
+    {
+      "id": "clip",
+      "type": "video",
+      "label": "Vídeo con sonido",
+      "accept": ["mp4", "mov"],
+      "maxSizeMB": 50
+    }
+  ]
+}

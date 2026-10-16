@@ -23,6 +23,8 @@ export interface PrefsShape {
   lastTemplateId?: string
   values: Record<string, FieldValues>
   background?: PreviewBackground
+  volume?: number
+  muted?: boolean
 }
 
 const api = {

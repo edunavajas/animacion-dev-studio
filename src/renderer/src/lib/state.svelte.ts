@@ -45,6 +45,8 @@ class UiState {
   selectedId = $state<string | null>(null)
   values = $state<FieldValues>({})
   background = $state<PreviewBackground>({ kind: 'checker' })
+  volume = $state(1)
+  muted = $state(false)
   jobs = $state<RenderJob[]>([])
   toasts = $state<Toast[]>([])
   conflict = $state<Conflict | null>(null)
@@ -97,6 +99,8 @@ class UiState {
     const prefs = await window.api.prefs.get()
     this.outputDir = prefs.outputDir ?? null
     if (prefs.background) this.background = prefs.background
+    if (typeof prefs.volume === 'number') this.volume = prefs.volume
+    if (typeof prefs.muted === 'boolean') this.muted = prefs.muted
     if (prefs.lastTemplateId && this.library.some((e) => e.id === prefs.lastTemplateId)) {
       // Se reabre con openTemplate para que también siembre los valores por defecto.
       const entry = this.library.find((e) => e.id === prefs.lastTemplateId)!
@@ -109,7 +113,8 @@ class UiState {
     window.api.exporter.onFinished((job) => {
       this.upsertJob(job)
       if (job.status === 'done') {
-        this.notify(`«${job.templateName}» exportado.`, 'ok', {
+        const audio = job.hasAudio === true ? ' con sonido' : job.hasAudio === false ? ' sin sonido' : ''
+        this.notify(`«${job.templateName}» exportado${audio}.`, 'ok', {
           label: 'Mostrar en carpeta',
           run: () => void window.api.exporter.openFolder(job.outputPath)
         })
@@ -164,7 +169,19 @@ class UiState {
     this.importing = true
     this.dragActive = false
     try {
-      const result = await window.api.library.import(path, replace)
+      let result: ImportResult
+      try {
+        result = await window.api.library.import(path, replace)
+      } catch (err) {
+        // Un fallo inesperado del proceso principal nunca debe quedarse en silencio.
+        const message =
+          err instanceof Error && err.message ? err.message : 'No se pudo leer esa carpeta.'
+        this.notify(message, 'error', {
+          label: 'Copiar informe',
+          run: () => void this.copyErrorReport(`Importar: ${message}`)
+        })
+        return
+      }
       if (result.conflict && !replace) {
         this.conflict = { ...result.conflict, sourcePath: path, issues: result.issues }
         return
@@ -198,8 +215,24 @@ class UiState {
   }
 
   async addViaDialog(): Promise<void> {
-    const paths = await window.api.library.importDialog()
-    for (const p of paths) await this.importPath(p)
+    let paths: string[] = []
+    try {
+      paths = await window.api.library.importDialog()
+    } catch (err) {
+      this.notify(err instanceof Error ? err.message : 'No se pudo abrir el selector.', 'error')
+      return
+    }
+    for (const p of paths) {
+      try {
+        await this.importPath(p)
+      } catch (err) {
+        // Una carpeta mala no debe impedir procesar el resto.
+        this.notify(
+          err instanceof Error ? err.message : 'No se pudo añadir una de las plantillas.',
+          'error'
+        )
+      }
+    }
   }
 
   async openTemplate(entry: LibraryEntry): Promise<void> {
@@ -241,6 +274,17 @@ class UiState {
     this.background = { kind }
     // Los proxies de $state no son clonables por IPC: se manda un objeto plano.
     await window.api.prefs.set({ background: { kind } })
+  }
+
+  async setVolume(value: number): Promise<void> {
+    this.volume = Math.max(0, Math.min(1, value))
+    if (this.volume > 0) this.muted = false
+    await window.api.prefs.set({ volume: this.volume, muted: this.muted })
+  }
+
+  async toggleMute(): Promise<void> {
+    this.muted = !this.muted
+    await window.api.prefs.set({ muted: this.muted })
   }
 
   async deleteTemplate(entry: LibraryEntry): Promise<void> {

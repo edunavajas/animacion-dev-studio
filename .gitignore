@@ -10,9 +10,11 @@ resources/templates/
 resources/.sidecars-ok
 .integration.mjs
 .debug-preview.mjs
+.debug-audio.mjs
 .bench.mjs
 test/.build/
 *.tsbuildinfo
+.hyperframes/
 .DS_Store
 *.log
 logs/

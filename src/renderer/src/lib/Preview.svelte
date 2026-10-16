@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte'
-  import { Play, Pause, RotateCcw, Repeat } from 'lucide-svelte'
+  import { Play, Pause, RotateCcw, Repeat, Volume2, Volume1, VolumeX } from 'lucide-svelte'
   import { ui } from './state.svelte'
   import type { FieldValues, LibraryEntry, PreviewBackground } from '../../../shared/types'
 
@@ -37,6 +37,21 @@
     frame?.contentWindow?.postMessage(msg, '*')
   }
 
+  /** El volumen maestro y el silencio viven en la configuración de la app. */
+  function pushAudio() {
+    post({ type: 'volume', value: ui.volume })
+    post({ type: 'muted', value: ui.muted })
+  }
+
+  let lastAudio = { v: -1, m: false }
+  $effect(() => {
+    const v = ui.volume
+    const m = ui.muted
+    if (v === lastAudio.v && m === lastAudio.m) return
+    lastAudio = { v, m }
+    pushAudio()
+  })
+
   function onMessage(e: MessageEvent) {
     if (frameOrigin && e.origin !== frameOrigin) return
     const d = e.data as { type?: string; t?: number; duration?: number; paused?: boolean; message?: string }
@@ -45,6 +60,7 @@
       loading = false
       post({ type: 'background', kind: ui.background.kind })
       post({ type: 'theme', dark: window.matchMedia('(prefers-color-scheme: dark)').matches })
+      pushAudio()
       if (pendingSeek !== null) {
         const t = pendingSeek
         pendingSeek = null
@@ -208,6 +224,35 @@
 
     <span class="transport__time tnum">{time.toFixed(1)} s / {duration.toFixed(1)} s</span>
 
+    <div class="volume">
+      <button
+        class="btn btn--icon"
+        onclick={() => ui.toggleMute()}
+        title={ui.muted ? 'Quitar silencio' : 'Silenciar'}
+        aria-label={ui.muted ? 'Quitar silencio de la vista previa' : 'Silenciar la vista previa'}
+        aria-pressed={ui.muted}
+      >
+        {#if ui.muted || ui.volume === 0}
+          <VolumeX size={16} strokeWidth={1.75} />
+        {:else if ui.volume < 0.5}
+          <Volume1 size={16} strokeWidth={1.75} />
+        {:else}
+          <Volume2 size={16} strokeWidth={1.75} />
+        {/if}
+      </button>
+      <input
+        class="volume__slider"
+        type="range"
+        min="0"
+        max="1"
+        step="0.01"
+        value={ui.muted ? 0 : ui.volume}
+        oninput={(e) => ui.setVolume(Number((e.target as HTMLInputElement).value))}
+        aria-label="Volumen de la vista previa"
+        aria-valuetext="{Math.round((ui.muted ? 0 : ui.volume) * 100)} por ciento"
+      />
+    </div>
+
     <button
       class="btn btn--icon"
       class:is-on={loop}
@@ -366,6 +411,33 @@
     white-space: nowrap;
     min-width: 92px;
     text-align: right;
+  }
+
+  .volume {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-1);
+    flex: 0 0 auto;
+  }
+
+  .volume__slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 72px;
+    height: 4px;
+    border-radius: var(--r-full);
+    background: var(--surface-sunken);
+    cursor: pointer;
+  }
+
+  .volume__slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--surface);
+    box-shadow: var(--elev-1);
   }
 
   .is-on {
