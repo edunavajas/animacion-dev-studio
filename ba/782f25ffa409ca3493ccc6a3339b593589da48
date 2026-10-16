@@ -1,0 +1,19 @@
+docs/PHASE0-SPIKE.md
+  s_406522fa1ecbde::t_bc99321037bd0d 177-205,208-210
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ba782f25ffa409ca3493ccc6a3339b593589da48",
+  "prompts": {},
+  "sessions": {
+    "s_406522fa1ecbde": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "283ac3e5-caa0-40a2-b228-81f1ad25fd0a",
+        "model": "unknown"
+      },
+      "human_author": "Edu Navajas <eduardonco@ext.inditex.com>"
+    }
+  }
+}
