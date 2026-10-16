@@ -1,0 +1,14 @@
+docs/PHASES.md
+  h_6241add5026f5b 1-119
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "99d8efc887458daf08dc080f8110e9c14faf5dc1",
+  "prompts": {},
+  "humans": {
+    "h_6241add5026f5b": {
+      "author": "Edu Navajas <eduardonco@ext.inditex.com>"
+    }
+  }
+}
