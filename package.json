@@ -1,0 +1,44 @@
+{
+  "name": "animacion-dev-studio",
+  "version": "0.1.0",
+  "description": "Reproductor y exportador de plantillas HyperFrames para editores no técnicos (MOV ProRes 4444 con alpha)",
+  "license": "MIT",
+  "author": "Eduardo Navajas",
+  "private": true,
+  "type": "module",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "start": "electron-vite preview",
+    "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
+    "typecheck:web": "svelte-check --tsconfig tsconfig.web.json",
+    "typecheck": "npm run typecheck:node && npm run typecheck:web",
+    "test": "npm run test:integration",
+    "test:integration": "esbuild test/integration.ts --bundle --platform=node --format=esm --external:electron --outfile=.integration.mjs && electron .integration.mjs",
+    "debug:preview": "esbuild test/debug-preview.ts --bundle --platform=node --format=esm --external:electron --outfile=.debug-preview.mjs && electron .debug-preview.mjs",
+    "sidecars": "node scripts/fetch-sidecars.mjs",
+    "dist:mac": "npm run sidecars && npm run build && electron-builder --mac",
+    "dist:win": "npm run sidecars && npm run build && electron-builder --win"
+  },
+  "dependencies": {
+    "adm-zip": "^0.6.1",
+    "ffmpeg-static": "^5.2.0",
+    "ffprobe-static": "^3.1.0",
+    "hyperframes": "0.8.164",
+    "lucide-svelte": "^1.0.1"
+  },
+  "devDependencies": {
+    "@puppeteer/browsers": "^3.2.5",
+    "@sveltejs/vite-plugin-svelte": "^6.2.4",
+    "@types/node": "^22.10.0",
+    "electron": "^44.8.0",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^6.0.0",
+    "svelte": "^5.57.2",
+    "svelte-check": "^4.3.0",
+    "typescript": "^5.7.2",
+    "vite": "^7.1.0"
+  }
+}

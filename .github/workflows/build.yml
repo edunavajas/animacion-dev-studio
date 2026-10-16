@@ -1,0 +1,77 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  verify:
+    name: tipado y pruebas (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Los sidecars son pesados: en verificación solo el runtime y la lista de ficheros.
+      - run: node scripts/fetch-sidecars.mjs
+        env:
+          SKIP_CHROME: '1'
+      - run: npm run typecheck
+      - name: Pruebas de integración (Electron headless)
+        run: npm run test:integration
+        env:
+          ELECTRON_DISABLE_SECURITY_WARNINGS: '1'
+
+  dist:
+    name: instalador (${{ matrix.os }})
+    needs: verify
+    if: github.event_name != 'pull_request'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            chrome: mac_arm,mac
+          - os: windows-latest
+            chrome: ''
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Preparar sidecars (navegador + runtime + plantillas)
+        run: node scripts/fetch-sidecars.mjs
+        env:
+          CHROME_PLATFORM: ${{ matrix.chrome }}
+      - run: npm run build
+      - name: Empaquetar (macOS)
+        if: runner.os == 'macOS'
+        run: npx electron-builder --mac --arm64 --x64 --publish never
+      - name: Empaquetar (Windows)
+        if: runner.os == 'Windows'
+        run: npx electron-builder --win --x64 --publish never
+      - name: Subir instaladores
+        uses: actions/upload-artifact@v4
+        with:
+          name: instaladores-${{ matrix.os }}
+          path: |
+            release/*.dmg
+            release/*.exe
+            release/*.msi
+            release/*.zip
+          if-no-files-found: error
+          retention-days: 14

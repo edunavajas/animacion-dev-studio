@@ -1,0 +1,60 @@
+appId: dev.animacion.studio
+productName: animacion-dev Studio
+copyright: © 2026 Eduardo Navajas
+
+directories:
+  output: release
+  buildResources: build
+
+# El código de la app va dentro del asar; los binarios y dependencias nativas
+# (chrome-headless-shell, ffmpeg/ffprobe, hyperframes y sus módulos) se extraen
+# para poder ejecutarlos como sidecars.
+files:
+  - out/**/*
+  - package.json
+  - '!**/*.map'
+
+asarUnpack:
+  - node_modules/**/*
+
+extraResources:
+  - from: resources/player
+    to: player
+  - from: resources/chrome
+    to: chrome
+  - from: resources/templates
+    to: templates
+
+mac:
+  category: public.app-category.video
+  target:
+    - target: dmg
+      arch:
+        - arm64
+        - x64
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+
+dmg:
+  title: animacion-dev Studio
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: msi
+      arch:
+        - x64
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  shortcutName: animacion-dev Studio
+
+msi:
+  oneClick: false

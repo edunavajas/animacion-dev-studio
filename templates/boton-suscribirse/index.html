@@ -1,0 +1,131 @@
+<!doctype html>
+<html
+  lang="es"
+  data-composition-variables='[
+    {"id":"subs","type":"string","label":"Suscriptores","default":"12,4 K"},
+    {"id":"avatar","type":"string","label":"Foto del canal","default":"assets/avatar.svg"},
+    {"id":"accent","type":"color","label":"Color de acento","default":"#D9381E"},
+    {"id":"cta","type":"string","label":"Texto del botón","default":"Suscribirse"}
+  ]'
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>Botón de suscribirse</title>
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        /* Sin fondo: la transparencia es el producto. */
+        background: transparent;
+        font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+      }
+      #card {
+        display: flex;
+        align-items: center;
+        gap: 28px;
+        padding: 26px 34px 26px 26px;
+        border-radius: 999px;
+        background: #ffffff;
+        box-shadow: 0 24px 60px rgba(20, 20, 40, 0.22);
+      }
+      #avatar-wrap {
+        width: 116px;
+        height: 116px;
+        border-radius: 999px;
+        overflow: hidden;
+        background: #ececf4;
+        flex: 0 0 auto;
+        display: grid;
+        place-items: center;
+      }
+      #avatar {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      #copy {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-width: 260px;
+      }
+      #subs {
+        font-size: 64px;
+        font-weight: 700;
+        line-height: 1;
+        color: #1b1b29;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.02em;
+      }
+      #subs-caption {
+        font-size: 26px;
+        font-weight: 500;
+        color: #55556e;
+        margin-top: 8px;
+        letter-spacing: 0.01em;
+      }
+      #btn {
+        flex: 0 0 auto;
+        padding: 26px 46px;
+        border-radius: 999px;
+        background: var(--accent, #d9381e);
+        color: #ffffff;
+        font-size: 34px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="boton-suscribirse"
+      data-start="0"
+      data-width="1920"
+      data-height="1080"
+      data-duration="4"
+      data-fps="30"
+    >
+      <section id="stage" class="clip" data-start="0" data-duration="4">
+        <div id="card">
+          <div id="avatar-wrap">
+            <img id="avatar" src="assets/avatar.svg" data-var-src="avatar" alt="" />
+          </div>
+          <div id="copy">
+            <span id="subs" data-var-text="subs">12,4 K</span>
+            <span id="subs-caption">suscriptores</span>
+          </div>
+          <div id="btn" data-var-text="cta">Suscribirse</div>
+        </div>
+      </section>
+    </div>
+    <script>
+      // Timeline en pausa y registrado: el runtime y el render lo controlan.
+      const tl = gsap.timeline({ paused: true });
+      tl.from('#card', { y: 140, opacity: 0, duration: 0.7, ease: 'power3.out' }, 0.15)
+        .from('#avatar-wrap', { scale: 0.3, opacity: 0, duration: 0.55, ease: 'back.out(2)' }, 0.5)
+        .from('#btn', { scale: 0.5, opacity: 0, duration: 0.45, ease: 'back.out(2)' }, 0.8)
+        .from('#subs', { y: 24, opacity: 0, duration: 0.4, ease: 'power2.out' }, 1.0)
+        .to('#card', { y: -40, opacity: 0, duration: 0.5, ease: 'power2.in' }, 3.2);
+      window.__timelines['boton-suscribirse'] = tl;
+    </script>
+  </body>
+</html>

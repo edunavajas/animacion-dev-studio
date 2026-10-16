@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "id": "boton-suscribirse",
+  "name": "Botón de suscribirse",
+  "description": "Botón con la foto del canal, el contador de suscriptores y un color de acento.",
+  "version": "1.0.0",
+  "author": "animacion-dev",
+  "duration": 4,
+  "resolution": "landscape",
+  "fps": 30,
+  "fields": [
+    {
+      "id": "subs",
+      "type": "text",
+      "label": "Suscriptores",
+      "default": "12,4 K",
+      "maxLength": 12,
+      "help": "El número que aparece junto a la foto del canal."
+    },
+    {
+      "id": "avatar",
+      "type": "image",
+      "label": "Foto del canal",
+      "accept": ["png", "jpg", "jpeg", "webp", "svg"],
+      "maxSizeMB": 10,
+      "help": "Se recorta en círculo. Mejor cuadrada."
+    },
+    {
+      "id": "accent",
+      "type": "color",
+      "label": "Color de acento",
+      "default": "#D9381E"
+    },
+    {
+      "id": "cta",
+      "type": "text",
+      "label": "Texto del botón",
+      "default": "Suscribirse",
+      "maxLength": 18
+    }
+  ]
+}

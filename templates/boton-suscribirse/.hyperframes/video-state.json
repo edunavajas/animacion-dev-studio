@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "historyId": "260cf7a4-b236-44d8-9605-a6bfc0203526",
+  "currentRevision": null,
+  "pendingChanges": false,
+  "files": {
+    "assets/avatar.svg": {
+      "hash": "164ba850367c701d5c280fdb04a96b2ad9eda30882e9b5f0bd02ee58f41101f9",
+      "content": "/Users/eduardo.navajas/.cache/hyperframes/history/260cf7a4-b236-44d8-9605-a6bfc0203526/blobs/16/164ba850367c701d5c280fdb04a96b2ad9eda30882e9b5f0bd02ee58f41101f9"
+    },
+    "assets/gsap.min.js": {
+      "hash": "c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280",
+      "content": "/Users/eduardo.navajas/.cache/hyperframes/history/260cf7a4-b236-44d8-9605-a6bfc0203526/blobs/c1/c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280"
+    },
+    "index.html": {
+      "hash": "b256b57761f7546a529e79e749bcae715a06eb4d91c08cb00d464f947648ab18",
+      "content": "/Users/eduardo.navajas/.cache/hyperframes/history/260cf7a4-b236-44d8-9605-a6bfc0203526/blobs/b2/b256b57761f7546a529e79e749bcae715a06eb4d91c08cb00d464f947648ab18"
+    },
+    "template.json": {
+      "hash": "988fab28692c2bda855d5d5e54e692d3b5db58915a4e6882ff86a5196aa45ccf",
+      "content": "/Users/eduardo.navajas/.cache/hyperframes/history/260cf7a4-b236-44d8-9605-a6bfc0203526/blobs/98/988fab28692c2bda855d5d5e54e692d3b5db58915a4e6882ff86a5196aa45ccf"
+    }
+  },
+  "revisions": {},
+  "checks": {
+    "latest": null,
+    "revisions": {},
+    "unversioned": []
+  },
+  "snapshots": {
+    "latest": null,
+    "revisions": {},
+    "unversioned": []
+  },
+  "renders": {
+    "latest": {
+      "id": "ffe96653-feda-4f3a-8464-b2a2a51d5b31",
+      "completedAt": 1792150719691,
+      "output": "/var/folders/wd/f2z1pc153t59m8d2ls0t218h0000gq/T/studio-test-out.mov",
+      "status": "completed",
+      "revision": null
+    },
+    "retainedRevisions": []
+  },
+  "pendingArtifactCleanup": []
+}

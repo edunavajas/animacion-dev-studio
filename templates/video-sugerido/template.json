@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "id": "video-sugerido",
+  "name": "Vídeo sugerido",
+  "description": "Tarjeta de vídeo sugerido con miniatura, título, canal y barra de progreso.",
+  "version": "1.0.0",
+  "author": "animacion-dev",
+  "duration": 5,
+  "resolution": "landscape",
+  "fps": 30,
+  "fields": [
+    {
+      "id": "miniatura",
+      "type": "image",
+      "label": "Miniatura",
+      "accept": ["png", "jpg", "jpeg", "webp"],
+      "maxSizeMB": 10,
+      "help": "Se recorta a 16:9. Mejor 1280×720 o mayor."
+    },
+    {
+      "id": "titulo",
+      "type": "text",
+      "label": "Título del vídeo",
+      "default": "Cómo montar tu primer vídeo",
+      "maxLength": 60
+    },
+    {
+      "id": "canal",
+      "type": "text",
+      "label": "Nombre del canal",
+      "default": "animacion-dev",
+      "maxLength": 28
+    },
+    {
+      "id": "acento",
+      "type": "color",
+      "label": "Color de acento",
+      "default": "#5646E0"
+    }
+  ]
+}

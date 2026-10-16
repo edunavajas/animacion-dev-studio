@@ -1,0 +1,140 @@
+<!doctype html>
+<html
+  lang="es"
+  data-composition-variables='[
+    {"id":"titulo","type":"string","label":"Título del vídeo","default":"Cómo montar tu primer vídeo"},
+    {"id":"canal","type":"string","label":"Nombre del canal","default":"animacion-dev"},
+    {"id":"miniatura","type":"string","label":"Miniatura","default":"assets/miniatura.svg"},
+    {"id":"acento","type":"color","label":"Color de acento","default":"#5646E0"}
+  ]'
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>Vídeo sugerido</title>
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+      #card {
+        position: absolute;
+        top: 72px;
+        right: 72px;
+        width: 620px;
+        border-radius: 28px;
+        background: #ffffff;
+        box-shadow: 0 28px 70px rgba(20, 20, 40, 0.26);
+        overflow: hidden;
+      }
+      #thumb-wrap {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        background: #ececf4;
+        overflow: hidden;
+      }
+      #thumb {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      #badge {
+        position: absolute;
+        left: 20px;
+        bottom: 20px;
+        padding: 8px 16px;
+        border-radius: 999px;
+        background: rgba(20, 20, 40, 0.78);
+        color: #ffffff;
+        font-size: 22px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+      #body {
+        padding: 26px 28px 30px;
+      }
+      #titulo {
+        font-size: 38px;
+        font-weight: 700;
+        line-height: 1.18;
+        letter-spacing: -0.02em;
+        color: #1b1b29;
+        margin: 0 0 14px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      #canal {
+        font-size: 26px;
+        font-weight: 500;
+        color: #55556e;
+        margin: 0;
+      }
+      #bar {
+        height: 6px;
+        border-radius: 999px;
+        background: var(--acento, #5646e0);
+        transform-origin: left center;
+      }
+      #bar-track {
+        margin-top: 24px;
+        border-radius: 999px;
+        background: #ececf4;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="video-sugerido"
+      data-start="0"
+      data-width="1920"
+      data-height="1080"
+      data-duration="5"
+      data-fps="30"
+    >
+      <section id="stage" class="clip" data-start="0" data-duration="5">
+        <div id="card">
+          <div id="thumb-wrap">
+            <img id="thumb" src="assets/miniatura.svg" data-var-src="miniatura" alt="" />
+            <span id="badge">08:24</span>
+          </div>
+          <div id="body">
+            <h1 id="titulo" data-var-text="titulo">Cómo montar tu primer vídeo</h1>
+            <p id="canal" data-var-text="canal">animacion-dev</p>
+            <div id="bar-track"><div id="bar"></div></div>
+          </div>
+        </div>
+      </section>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      tl.from('#card', { x: 260, opacity: 0, duration: 0.8, ease: 'power3.out' }, 0.2)
+        .from('#thumb', { scale: 1.12, duration: 1.0, ease: 'power2.out' }, 0.4)
+        .from('#titulo', { y: 22, opacity: 0, duration: 0.45, ease: 'power2.out' }, 0.7)
+        .from('#canal', { y: 16, opacity: 0, duration: 0.4, ease: 'power2.out' }, 0.85)
+        .fromTo('#bar', { scaleX: 0 }, { scaleX: 1, duration: 3.2, ease: 'none' }, 1.0)
+        .to('#card', { x: 200, opacity: 0, duration: 0.6, ease: 'power2.in' }, 4.2);
+      window.__timelines['video-sugerido'] = tl;
+    </script>
+  </body>
+</html>
