@@ -154,9 +154,22 @@ export function hostPage(compositionSrc: string, width: number, height: number):
         if (extra) for (var k in extra) msg[k] = extra[k];
         try { c.postMessage(msg, '*'); } catch (e) {}
       }
+      // Se envía SOLO cuando cambia. Reenviar el mismo volumen no es inocuo: el
+      // runtime calcula volumen = data-volume × maestro, y si una sincronización
+      // de media escribe de vuelta el valor efectivo, un segundo envío lo
+      // multiplica otra vez (0,3 acababa sonando a 0,09 en Windows). Tras una
+      // recarga sí hay que reenviarlo, porque el runtime nuevo arranca a 1.
+      var lastVol = null;
+      var lastMuted = null;
       function pushAudio() {
-        sendControl('set-volume', { volume: masterVolume });
-        sendControl('set-muted', { muted: muted });
+        if (lastVol !== masterVolume) {
+          sendControl('set-volume', { volume: masterVolume });
+          lastVol = masterVolume;
+        }
+        if (lastMuted !== muted) {
+          sendControl('set-muted', { muted: muted });
+          lastMuted = muted;
+        }
       }
 
       // Escala la composición (W×H) al hueco disponible y la centra, sin deformar.
@@ -223,6 +236,9 @@ export function hostPage(compositionSrc: string, width: number, height: number):
         if (d.type === 'reload') {
           frame.src = src + '?__v=' + Date.now();
           announced = false;
+          // Runtime nuevo: hay que volver a afirmar volumen y silencio.
+          lastVol = null;
+          lastMuted = null;
           return;
         }
         if (d.type === 'background') {

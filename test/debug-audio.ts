@@ -123,6 +123,20 @@ async function main(): Promise<void> {
   console.log('\n=== tras pedir silencio ===')
   console.log(JSON.stringify({ muted: muted.muted, volume: muted.volume }, null, 2))
 
+  // ¿Reenviar el MISMO volumen lo multiplica? (0,3 → 0,09 sería la señal)
+  await win.webContents.executeJavaScript(
+    `window.postMessage({type:'muted', value:false}, '*'); true`
+  )
+  await new Promise((r) => setTimeout(r, 600))
+  for (let i = 0; i < 2; i++) {
+    await win.webContents.executeJavaScript(
+      `window.postMessage({type:'volume', value:0.3}, '*'); true`
+    )
+    await new Promise((r) => setTimeout(r, 700))
+    const v = await win.webContents.executeJavaScript(probe)
+    console.log(`  tras envío #${i + 1} de 0.3 → volume = ${v.volume}`)
+  }
+
   console.log('\n=== veredicto ===')
   const ok = before.found && !before.paused && before.readyState >= 2
   console.log('la media se reproduce:', ok ? 'SÍ' : 'NO', `(paused=${before.paused} readyState=${before.readyState})`)
