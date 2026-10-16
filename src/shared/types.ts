@@ -186,3 +186,48 @@ export interface ExportRequest {
 export interface PreviewBackground {
   kind: 'checker' | 'light' | 'dark'
 }
+
+/* ------------------------------------------------------------------ */
+/* Actualizaciones                                                     */
+/* ------------------------------------------------------------------ */
+
+export type UpdatePhase =
+  | 'idle'
+  | 'checking'
+  | 'available'
+  | 'downloading'
+  | 'ready'
+  | 'installing'
+  | 'error'
+
+export interface UpdateAsset {
+  name: string
+  url: string
+  size: number
+}
+
+export interface UpdateInfo {
+  /** Si hay una versión más nueva que la instalada. */
+  available: boolean
+  currentVersion: string
+  /** Versión publicada, sin la «v» del tag. */
+  version?: string
+  notes?: string
+  publishedAt?: string
+  htmlUrl?: string
+  /** Instalador de esta plataforma. */
+  asset?: UpdateAsset
+  /** Motivo si la comprobación no se pudo completar. */
+  error?: string
+}
+
+export interface UpdateState {
+  phase: UpdatePhase
+  info?: UpdateInfo
+  /** 0..100 */
+  progress: number
+  downloadedPath?: string
+  error?: string
+  /** En macOS no se puede instalar solo: hay que abrir el .dmg y arrastrar. */
+  manualInstall?: boolean
+}

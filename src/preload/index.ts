@@ -7,7 +7,8 @@ import type {
   ImportResult,
   LibraryEntry,
   PreviewBackground,
-  RenderJob
+  RenderJob,
+  UpdateState
 } from '../shared/types'
 
 type Unsub = () => void
@@ -82,6 +83,17 @@ const api = {
     update: (templateId: string, values: FieldValues, background: PreviewBackground): Promise<void> =>
       ipcRenderer.invoke(CH.previewUpdate, templateId, values, background),
     stop: (): Promise<void> => ipcRenderer.invoke(CH.previewStop)
+  },
+
+  updater: {
+    /** `force: false` solo devuelve el estado ya conocido, sin salir a la red. */
+    check: (force = true): Promise<UpdateState> => ipcRenderer.invoke(CH.updateCheck, force),
+    download: (): Promise<UpdateState> => ipcRenderer.invoke(CH.updateDownload),
+    install: (): Promise<UpdateState> => ipcRenderer.invoke(CH.updateInstall),
+    dismiss: (): Promise<UpdateState> => ipcRenderer.invoke(CH.updateDismiss),
+    cancel: (): Promise<UpdateState> => ipcRenderer.invoke(CH.updateCancel),
+    openRelease: (url: string): Promise<void> => ipcRenderer.invoke(CH.updateOpenRelease, url),
+    onState: (cb: (s: UpdateState) => void): Unsub => sub(CH.updateState, cb)
   }
 }
 

@@ -6,6 +6,7 @@
   import Toasts from './lib/Toasts.svelte'
   import ConflictDialog from './lib/ConflictDialog.svelte'
   import ConfirmDialog from './lib/ConfirmDialog.svelte'
+  import UpdatePrompt from './lib/UpdatePrompt.svelte'
   import ExportSheet from './lib/ExportSheet.svelte'
   import { Layers, Plus, Sun, Moon } from 'lucide-svelte'
 
@@ -119,6 +120,8 @@
       {/if}
     </div>
   </header>
+
+  <UpdatePrompt />
 
   <main id="main" class="shell">
     {#if !ui.ready}

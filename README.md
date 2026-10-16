@@ -131,9 +131,30 @@ npm run dev           # arranca la app
 - [`docs/PHASE0-SPIKE.md`](docs/PHASE0-SPIKE.md) — decisiones tomadas con datos.
 - [`docs/SIGNING.md`](docs/SIGNING.md) — firma, Gatekeeper y SmartScreen.
 
+## Actualizaciones
+
+La app **comprueba al abrir** si hay una versión nueva: pregunta a la API pública
+de GitHub por la última release y, si el número es mayor, aparece un aviso con un
+botón **Descargar**. No hay que buscar nada a mano.
+
+| | Windows | macOS |
+|---|---|---|
+| Descarga | ✅ dentro de la app, con progreso | ✅ dentro de la app, con progreso |
+| Instala | ✅ **solo**: se cierra y abre el instalador | ⚠️ abre el `.dmg` y arrastras a Aplicaciones |
+| Qué hace falta | nada | **firma de Apple** (99 €/año) |
+
+**Por qué en macOS no se instala sola:** macOS entrega la actualización a
+Squirrel.Mac, que exige que el binario nuevo esté firmado por el **mismo Team ID**
+que el instalado. No hay lista de confianza que ampliar: sin certificado de Apple,
+una app no puede reemplazarse a sí misma. Con el certificado, es cambiar una línea.
+
+Los instaladores olvidados en `userData/updates/` no se limpian solos todavía.
+
 ## Límites conocidos (v1)
 
-- Sin autoactualización, sin catálogo remoto, sin editor de plantillas, sin IA.
+- Sin catálogo remoto: las plantillas se comparten por una carpeta sincronizada
+  (Drive, OneDrive, Dropbox…) y se añaden arrastrando.
+- Sin editor de plantillas, sin timeline, sin IA.
 - Sin soporte de Linux (el código es portable, pero no se distribuye).
 - Windows 11 x64 es el objetivo en Windows; macOS 14+ en Mac (arm64).
 - **Verificado**: la exportación MOV con alpha funciona desde el paquete, con

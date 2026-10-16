@@ -213,8 +213,16 @@ if (!app.requestSingleInstanceLock()) {
     }
 
     buildMenu()
-    registerIpc({ getWindow: () => mainWindow, renderManager, preview })
+    const { checkForUpdatesInBackground } = registerIpc({
+      getWindow: () => mainWindow,
+      renderManager,
+      preview
+    })
     createWindow()
+
+    // Al abrir: se comprueba si hay una versión nueva. Con retardo para no
+    // competir con el arranque y sin bloquear nada.
+    setTimeout(() => checkForUpdatesInBackground(), 4000)
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow()

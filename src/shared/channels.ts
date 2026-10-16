@@ -31,5 +31,13 @@ export const CH = {
 
   previewStart: 'preview:start',
   previewUpdate: 'preview:update',
-  previewStop: 'preview:stop'
+  previewStop: 'preview:stop',
+
+  updateCheck: 'update:check',
+  updateDownload: 'update:download',
+  updateInstall: 'update:install',
+  updateDismiss: 'update:dismiss',
+  updateCancel: 'update:cancel',
+  updateState: 'update:state',
+  updateOpenRelease: 'update:openRelease'
 } as const

@@ -5,7 +5,8 @@ import type {
   ImportResult,
   LibraryEntry,
   PreviewBackground,
-  RenderJob
+  RenderJob,
+  UpdateState
 } from '../../../shared/types'
 
 export interface Toast {
@@ -63,6 +64,9 @@ class UiState {
   conflict = $state<Conflict | null>(null)
   confirm = $state<ConfirmRequest | null>(null)
   theme = $state<'light' | 'dark'>('light')
+  update = $state<UpdateState>({ phase: 'idle', progress: 0 })
+  /** El aviso se puede descartar hasta el próximo arranque. */
+  updateDismissed = $state(false)
   importing = $state(false)
   dragActive = $state(false)
   exportSheetOpen = $state(false)
@@ -168,6 +172,7 @@ class UiState {
     })
     this.jobs = await window.api.exporter.list()
     this.ready = true
+    this.initUpdater()
     // Miniaturas que falten (p. ej. plantillas ya instaladas sin thumb.png).
     void this.ensureThumbnails()
   }
@@ -186,8 +191,46 @@ class UiState {
     await Promise.all(Array.from({ length: Math.min(workers, pending.length) }, run))
   }
 
-  /** Copia un informe de error para que el usuario lo pueda enviar. */
-  async copyErrorReport(reason?: string): Promise<void> {
+  /** Actualizaciones: al arrancar se comprueba si hay una versión nueva. */
+  initUpdater(): void {
+    window.api.updater.onState((s) => {
+      this.update = s
+    })
+    void window.api.updater.check(false).then((s) => {
+      this.update = s
+    })
+  }
+
+  get updateBannerVisible(): boolean {
+    return this.update.phase === 'available' && !this.updateDismissed
+  }
+
+  get updateDialogVisible(): boolean {
+    return ['downloading', 'ready', 'installing', 'error'].includes(this.update.phase)
+  }
+
+  async downloadUpdateNow(): Promise<void> {
+    this.update = await window.api.updater.download()
+  }
+
+  async installUpdateNow(): Promise<void> {
+    this.update = await window.api.updater.install()
+  }
+
+  async cancelUpdate(): Promise<void> {
+    await window.api.updater.cancel()
+  }
+
+  dismissUpdate(): void {
+    this.updateDismissed = true
+  }
+
+  async openReleasePage(): Promise<void> {
+    const url = this.update.info?.htmlUrl
+    if (url) await window.api.updater.openRelease(url)
+  }
+
+  /** Copia un informe de error para que el usuario lo pueda enviar. */  async copyErrorReport(reason?: string): Promise<void> {
     const report = await window.api.diagnosticsReport(reason)
     await window.api.copyText(report)
     this.notify('Informe copiado. Pégalo en un mensaje y mándalo.', 'ok')

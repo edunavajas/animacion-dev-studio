@@ -18,6 +18,7 @@ import { PreviewServer } from '../src/main/previewServer'
 import { listLibrary, importFromPath, deleteTemplate, installBundledExamples } from '../src/main/library'
 import { parseManifest, extractDeclaredVariables, crossCheck } from '../src/main/manifest'
 import { buildVariablesPayload, probeHasAudio } from '../src/main/render'
+import { isNewer, pickAsset } from '../src/main/updater'
 import { hyperframesCliPath, browserPath, ffmpegPath, ffprobePath, sidecarEnv } from '../src/main/sidecars'
 
 // Al ejecutar un script suelto, Electron no lee el nombre del package.json:
@@ -164,6 +165,28 @@ async function main(): Promise<void> {
 
   console.log('\n== importación: entradas inválidas no revientan ==')
   await checkBadImports()
+
+  console.log('\n== actualizaciones ==')
+  // Comparación de versiones (función pura: cubierta en CI sin depender de la red).
+  check('0.4.0 > 0.3.1', isNewer('0.4.0', '0.3.1') === true)
+  check('v0.4.0 > 0.3.1 (con la uve del tag)', isNewer('v0.4.0', '0.3.1') === true)
+  check('0.3.1 no es > 0.3.1', isNewer('0.3.1', '0.3.1') === false)
+  check('0.3.0 no es > 0.3.1', isNewer('0.3.0', '0.3.1') === false)
+  check('0.10.0 > 0.9.9 (no compara texto)', isNewer('0.10.0', '0.9.9') === true)
+
+  const assets = [
+    { name: 'animacion-dev.Studio-0.4.0-arm64.dmg', browser_download_url: 'https://x/a.dmg', size: 1 },
+    { name: 'animacion-dev.Studio.Setup.0.4.0.exe', browser_download_url: 'https://x/a.exe', size: 2 },
+    { name: 'animacion-dev.Studio-0.4.0-arm64.dmg.blockmap', browser_download_url: 'https://x/b', size: 3 }
+  ]
+  check(
+    'en macOS elige el .dmg (y no el .blockmap)',
+    pickAsset(assets, 'darwin')?.name === 'animacion-dev.Studio-0.4.0-arm64.dmg'
+  )
+  check(
+    'en Windows elige el .exe',
+    pickAsset(assets, 'win32')?.name === 'animacion-dev.Studio.Setup.0.4.0.exe'
+  )
 
   console.log(`\n${checks - failures}/${checks} comprobaciones OK`)
   if (failures > 0) console.log(`${failures} FALLOS`)

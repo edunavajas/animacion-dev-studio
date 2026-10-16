@@ -13,13 +13,15 @@ import {
 import { RenderManager } from './render'
 import { PreviewServer } from './previewServer'
 import { readPrefs, setTemplateValues, writePrefs } from './prefs'
-import { buildErrorReport } from './logs'
+import { buildErrorReport, log } from './logs'
+import { checkForUpdates, downloadUpdate, installUpdate } from './updater'
 import { cores, describeSidecars, isLowMemory, totalRamGB } from './sidecars'
 import type {
   AppInfo,
   ExportRequest,
   FieldValues,
-  PreviewBackground
+  PreviewBackground,
+  UpdateState
 } from '../shared/types'
 
 const EXT_BY_FORMAT: Record<string, string> = {
@@ -45,10 +47,111 @@ export function registerIpc(deps: {
   getWindow: () => BrowserWindow | null
   renderManager: RenderManager
   preview: PreviewServer
-}): void {
+}): { checkForUpdatesInBackground: () => void } {
   const send = (channel: string, payload: unknown) => {
     deps.getWindow()?.webContents.send(channel, payload)
   }
+
+  /* ------------------------------------------------------------ updates */
+
+  let updateState: UpdateState = { phase: 'idle', progress: 0 }
+  let downloadAbort: { aborted: boolean } | null = null
+
+  const publishUpdate = () => send(CH.updateState, updateState)
+
+  async function runCheck(): Promise<UpdateState> {
+    updateState = { ...updateState, phase: 'checking', error: undefined }
+    publishUpdate()
+    const info = await checkForUpdates(app.getVersion())
+    updateState = info.available
+      ? { phase: 'available', progress: 0, info }
+      : { phase: 'idle', progress: 0, info }
+    publishUpdate()
+    return updateState
+  }
+
+  ipcMain.handle(CH.updateCheck, async (_e, force = true) => (force ? runCheck() : updateState))
+
+  ipcMain.handle(CH.updateDownload, async () => {
+    const asset = updateState.info?.asset
+    if (!asset) return updateState
+    downloadAbort = { aborted: false }
+    updateState = { ...updateState, phase: 'downloading', progress: 0, error: undefined }
+    publishUpdate()
+    try {
+      const file = await downloadUpdate(
+        asset,
+        join(app.getPath('userData'), 'updates'),
+        (pct) => {
+          updateState = { ...updateState, progress: pct }
+          publishUpdate()
+        },
+        downloadAbort
+      )
+      updateState = {
+        ...updateState,
+        phase: 'ready',
+        progress: 100,
+        downloadedPath: file,
+        manualInstall: process.platform === 'darwin'
+      }
+    } catch (err) {
+      if (downloadAbort?.aborted) {
+        // Cancelado a propósito: no es un error, se vuelve al aviso.
+        updateState = { phase: updateState.info ? 'available' : 'idle', progress: 0, info: updateState.info }
+      } else {
+        const msg = err instanceof Error ? err.message : String(err)
+        updateState = { ...updateState, phase: 'error', error: msg }
+        log.error('falló la descarga de la actualización', { err: msg })
+      }
+    }
+    publishUpdate()
+    return updateState
+  })
+
+  ipcMain.handle(CH.updateCancel, () => {
+    if (downloadAbort) downloadAbort.aborted = true
+    return updateState
+  })
+
+  ipcMain.handle(CH.updateInstall, async () => {
+    const file = updateState.downloadedPath
+    if (!file) return updateState
+    updateState = { ...updateState, phase: 'installing' }
+    publishUpdate()
+    try {
+      const mode = await installUpdate(file)
+      if (mode === 'auto') {
+        // Windows: el instalador ya está lanzado; se cierra para que pueda
+        // reemplazar los ficheros en uso.
+        setTimeout(() => app.quit(), 1500)
+      }
+    } catch (err) {
+      updateState = {
+        ...updateState,
+        phase: 'error',
+        error: err instanceof Error ? err.message : String(err)
+      }
+      publishUpdate()
+    }
+    return updateState
+  })
+
+  ipcMain.handle(CH.updateDismiss, () => {
+    updateState = { phase: 'idle', progress: 0 }
+    publishUpdate()
+    return updateState
+  })
+
+  ipcMain.handle(CH.updateOpenRelease, (_e, url: string) => {
+    if (/^https:\/\/github\.com\//.test(url)) void shell.openExternal(url)
+  })
+
+  const checkForUpdatesInBackground = () => {
+    void runCheck().catch((err) => log.warn('comprobación de actualización falló', { err: String(err) }))
+  }
+
+  /* ------------------------------------------------------------- resto */
 
   deps.renderManager.on('update', (job) => send(CH.exportUpdate, job))
   deps.renderManager.on('finished', (job) => send(CH.exportFinished, job))
@@ -186,6 +289,8 @@ export function registerIpc(deps: {
   )
 
   ipcMain.handle(CH.previewStop, () => deps.preview.clearSession())
+
+  return { checkForUpdatesInBackground }
 }
 
 export { basename, extname, randomUUID }
