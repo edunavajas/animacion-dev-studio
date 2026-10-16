@@ -1,0 +1,19 @@
+test/debug-audio.ts
+  s_1b953e65578a84::t_0a0a8f9ca918fd 126-139
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3e973d72f5d5916a2e495b6ecb5c160d335b022a",
+  "prompts": {},
+  "sessions": {
+    "s_1b953e65578a84": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c0eaa898-921a-44b8-b83e-e3f3f8dcd343",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Edu Navajas <eduardonco@ext.inditex.com>"
+    }
+  }
+}
