@@ -1,0 +1,18 @@
+build/icon.html
+  h_6241add5026f5b 1-60
+src/main/library.ts
+  h_6241add5026f5b 181-183
+src/renderer/src/lib/state.svelte.ts
+  h_6241add5026f5b 128,130-137,139
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2b151a5e00012ee96cf94132465e6f71b5c3682b",
+  "prompts": {},
+  "humans": {
+    "h_6241add5026f5b": {
+      "author": "Edu Navajas <eduardonco@ext.inditex.com>"
+    }
+  }
+}
