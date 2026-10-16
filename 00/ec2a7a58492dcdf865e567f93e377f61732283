@@ -1,0 +1,46 @@
+.gitignore
+  h_6241add5026f5b 14
+package.json
+  h_6241add5026f5b 3,24-25
+src/main/index.ts
+  h_6241add5026f5b 10,43,178,180-186
+src/main/ipc.ts
+  h_6241add5026f5b 1,60,68-72
+src/main/prefs.ts
+  h_6241add5026f5b 20-21
+src/preload/index.ts
+  h_6241add5026f5b 28,34
+src/renderer/index.html
+  h_6241add5026f5b 2,7-14
+src/renderer/src/App.svelte
+  h_6241add5026f5b 8,10,73,97-105,144
+src/renderer/src/app.css
+  h_6241add5026f5b 48,99-132,291-301
+src/renderer/src/lib/ConfirmDialog.svelte
+  h_6241add5026f5b 1-81
+src/renderer/src/lib/Library.svelte
+  h_6241add5026f5b 4,9-16,18-35,48-54,106,110,129-136,300-329
+src/renderer/src/lib/Preview.svelte
+  h_6241add5026f5b 62,139-148
+src/renderer/src/lib/TemplateView.svelte
+  h_6241add5026f5b 56-67
+src/renderer/src/lib/state.svelte.ts
+  h_6241add5026f5b 25-35,64-65,91,108-130,139-141
+src/shared/channels.ts
+  h_6241add5026f5b 5
+src/shared/types.ts
+  h_6241add5026f5b 157-158
+test/debug-ui.ts
+  h_6241add5026f5b 1-154
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "00ec2a7a58492dcdf865e567f93e377f61732283",
+  "prompts": {},
+  "humans": {
+    "h_6241add5026f5b": {
+      "author": "Edu Navajas <eduardonco@ext.inditex.com>"
+    }
+  }
+}
