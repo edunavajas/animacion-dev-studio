@@ -19,3 +19,4 @@ logs/
 .vite/
 .svelte-kit/
 coverage/
+.engram/
