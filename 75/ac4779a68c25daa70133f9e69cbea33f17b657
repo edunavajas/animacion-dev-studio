@@ -1,0 +1,14 @@
+docs/SIGNING.md
+  h_6241add5026f5b 3-5,7-17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "75ac4779a68c25daa70133f9e69cbea33f17b657",
+  "prompts": {},
+  "humans": {
+    "h_6241add5026f5b": {
+      "author": "Edu Navajas <eduardonco@ext.inditex.com>"
+    }
+  }
+}
