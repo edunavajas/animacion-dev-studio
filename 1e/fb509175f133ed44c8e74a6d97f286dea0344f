@@ -1,0 +1,16 @@
+templates/boton-suscribirse/.hyperframes/video-state.json
+  h_6241add5026f5b 37-38
+test/integration.ts
+  h_6241add5026f5b 125-130,152-157,160-162,164
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1efb509175f133ed44c8e74a6d97f286dea0344f",
+  "prompts": {},
+  "humans": {
+    "h_6241add5026f5b": {
+      "author": "Edu Navajas <eduardonco@ext.inditex.com>"
+    }
+  }
+}
