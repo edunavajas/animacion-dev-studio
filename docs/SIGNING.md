@@ -1,9 +1,20 @@
 # Firma y distribución
 
-Estado: **los instaladores de v1 salen SIN firmar**. Esto es lo que pasa y lo que
-costaría arreglarlo.
+Estado: **los instaladores de v1 no están firmados con un certificado de
+desarrollador**, pero el bundle de macOS **sí va firmado ad-hoc** (`identity: "-"`).
+Es a propósito y conviene entender por qué, porque cambia lo que ve el usuario.
 
-## Qué ocurre sin firmar
+Sin firma ninguna, electron-builder omite el paso y el bundle se queda con la
+firma «linker» del Electron original, que ya es inválida en cuanto le añadimos
+recursos. Sin cuarentena macOS lo tolera, pero si el `.dmg` se descarga desde un
+navegador (que marca el archivo en cuarentena) el sistema responde **«la app está
+dañada y no se puede abrir»**, y ahí clic derecho → Abrir **no** sirve.
+
+Con firma ad-hoc el bundle es consistente: `codesign --verify --strict` pasa y el
+aviso vuelve a ser el normal de «desarrollador no identificado», que sí se puede
+saltar.
+
+## Qué ocurre sin certificado
 
 ### macOS (Gatekeeper)
 
