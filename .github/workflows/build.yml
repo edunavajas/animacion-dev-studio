@@ -23,10 +23,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      # Los sidecars son pesados: en verificación solo el runtime y la lista de ficheros.
-      - run: node scripts/fetch-sidecars.mjs
-        env:
-          SKIP_CHROME: '1'
+      # Se preparan los sidecars REALES (navegador incluido): las pruebas deben
+      # correr por el mismo camino que la app, no por uno recortado.
+      - name: Preparar sidecars
+        run: node scripts/fetch-sidecars.mjs
       - run: npm run typecheck
       - name: Pruebas de integración (Electron headless)
         run: npm run test:integration
@@ -64,6 +64,13 @@ jobs:
       - name: Empaquetar (Windows)
         if: runner.os == 'Windows'
         run: npx electron-builder --win --x64 --publish never
+      # Verifica el PAQUETE: que resuelve sus propios componentes sin nada del sistema.
+      - name: Diagnóstico del paquete (macOS)
+        if: runner.os == 'macOS'
+        run: '"release/mac-arm64/animacion-dev Studio.app/Contents/MacOS/animacion-dev Studio" --diagnose'
+      - name: Diagnóstico del paquete (Windows)
+        if: runner.os == 'Windows'
+        run: '& "release/win-unpacked/animacion-dev Studio.exe" --diagnose'
       - name: Subir instaladores
         uses: actions/upload-artifact@v4
         with:
