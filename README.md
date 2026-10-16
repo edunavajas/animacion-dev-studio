@@ -44,9 +44,43 @@ Descarga desde la última release: **https://github.com/edunavajas/animacion-dev
 
 | Plataforma | Archivo | Tamaño |
 |---|---|---|
-| macOS (arm64) | `animacion-dev.Studio-0.1.0-arm64.dmg` | 282 MB |
-| Windows 11 (x64) | `animacion-dev.Studio.Setup.0.1.0.exe` (instalador NSIS) | 249 MB |
-| Windows 11 (x64) | `animacion-dev.Studio.0.1.0.msi` | 276 MB |
+| macOS (arm64) | `animacion-dev.Studio-0.4.0-arm64.dmg` | 281 MB |
+| Windows 11 (x64) | `animacion-dev.Studio.Setup.0.4.0.exe` (instalador NSIS) | 249 MB |
+| Windows 11 (x64) | `animacion-dev.Studio.0.4.0.msi` | 276 MB |
+
+### 🍎 Primera vez en macOS: macOS va a bloquearla (es normal)
+
+Al abrirla dirá **«No se ha abierto… Apple no ha podido verificar que no contenga
+software malicioso»**. No está rota ni es un virus: es que no está firmada con un
+certificado de Apple. Pasa **una sola vez**. Para abrirla:
+
+1. Pulsa **Aceptar** en el aviso (no «Trasladar a la Papelera»).
+2. Ve a **Ajustes del Sistema → Privacidad y seguridad**.
+3. Baja hasta **Seguridad**: aparecerá un aviso sobre *animacion-dev Studio* con el
+   botón **«Abrir de todos modos»**.
+4. Púlsalo y confirma con tu contraseña o Touch ID.
+
+> Atajo por terminal:
+> ```bash
+> xattr -dr com.apple.quarantine "/Applications/animacion-dev Studio.app"
+> ```
+> En macOS recientes, **clic derecho → Abrir ya no siempre funciona** para apps sin
+> firmar: la vía de Ajustes es la que funciona seguro.
+
+**Las siguientes versiones ya no darán la lata**: cuando la app se actualiza sola,
+el `.dmg` lo descarga ella misma y esos ficheros no llevan la marca de cuarentena
+que dispara el aviso. Solo duele la primera instalación.
+
+### 🪟 En Windows
+
+SmartScreen dirá **«Windows protegió tu PC»** → **Más información → Ejecutar de
+todas formas**. Mismo motivo y también solo la primera vez.
+
+### Si te cansa el aviso
+
+Se quita comprando el certificado: **99 €/año** en Apple (Developer ID +
+notarización) y **200–600 €/año** en Windows. Detalles en
+[`docs/SIGNING.md`](docs/SIGNING.md).
 
 La app **no necesita** Node, Chrome ni ffmpeg instalados: lleva dentro sus propios
 componentes. En cambio, ocupa bastante (el navegador del render pesa ~190 MB), y
