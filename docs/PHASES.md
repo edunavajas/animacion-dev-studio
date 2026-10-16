@@ -81,6 +81,13 @@ exportar» sin ayuda. Eso requiere una persona; no se puede simular.
 **Riesgos abiertos.** El tamaño de la ventana mínimo (940×620) hace que la columna
 de edición y la preview convivan justas en pantallas pequeñas.
 
+**Desviación consciente del documento.** El brief pedía fondo «claro / oscuro /
+vídeo de prueba». Se implementaron **claro, oscuro y cuadros** (el de cuadros es el
+que de verdad hace falta: es el que deja ver el alfa). No se incluyó un vídeo de
+prueba porque obliga a empaquetar un clip de varios MB y no aporta una verificación
+que los otros tres fondos no den. Si se quiere, un `--default-background-color` con
+un MP4 de 2 s deja el hueco hecho.
+
 Detalle y tokens: [`DESIGN.md`](DESIGN.md).
 
 ---

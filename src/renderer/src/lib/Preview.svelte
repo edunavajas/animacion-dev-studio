@@ -22,6 +22,10 @@
   let loading = $state(true)
   let error = $state<string | null>(null)
   let dragging = $state(false)
+  // Al recargar por un cambio de valores se conserva el instante y el estado de
+  // reproducción: así el cambio se ve en su sitio y la animación no salta a cero.
+  let pendingSeek: number | null = null
+  let wasPlaying = true
 
   const BG_OPTIONS: { kind: PreviewBackground['kind']; label: string }[] = [
     { kind: 'checker', label: 'Cuadros' },
@@ -41,6 +45,12 @@
       loading = false
       post({ type: 'background', kind: ui.background.kind })
       post({ type: 'theme', dark: window.matchMedia('(prefers-color-scheme: dark)').matches })
+      if (pendingSeek !== null) {
+        const t = pendingSeek
+        pendingSeek = null
+        post({ type: 'seek', t })
+        post({ type: wasPlaying ? 'play' : 'pause' })
+      }
     } else if (d.type === 'time') {
       time = d.t ?? 0
       if (d.duration && d.duration > 0) reported = d.duration
@@ -93,6 +103,9 @@
     clearTimeout(debounce)
     debounce = setTimeout(async () => {
       await window.api.preview.update(entry.id, JSON.parse(snapshot) as FieldValues, { kind: bg })
+      // Se recuerda dónde estaba para no devolver la animación al principio.
+      pendingSeek = time
+      wasPlaying = playing
       post({ type: 'reload' })
     }, 280)
     return () => clearTimeout(debounce)
