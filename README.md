@@ -164,6 +164,7 @@ npm run dev           # arranca la app
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — cómo está montado y por qué.
 - [`docs/PHASE0-SPIKE.md`](docs/PHASE0-SPIKE.md) — decisiones tomadas con datos.
 - [`docs/SIGNING.md`](docs/SIGNING.md) — firma, Gatekeeper y SmartScreen.
+- [`docs/DESIGN-SKILLS.md`](docs/DESIGN-SKILLS.md) — recopilatorio de skills y guías de diseño, con un prompt listo para copiar.
 
 ## Actualizaciones
 
