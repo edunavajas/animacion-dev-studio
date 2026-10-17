@@ -1,0 +1,16 @@
+README.md
+  h_6241add5026f5b 167
+docs/DESIGN-SKILLS.md
+  h_6241add5026f5b 1-161
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7ba9bf197b4029e99400e3d0035407662b5f7101",
+  "prompts": {},
+  "humans": {
+    "h_6241add5026f5b": {
+      "author": "Edu Navajas <eduardonco@ext.inditex.com>"
+    }
+  }
+}
